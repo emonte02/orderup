@@ -1,0 +1,5 @@
+export async function openSaves(){
+ const db=await new Promise((resolve,reject)=>{const request=indexedDB.open('orderup-browser',1);request.onupgradeneeded=()=>request.result.createObjectStore('files',{keyPath:'path'});request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});
+ const loaded=await new Promise((resolve,reject)=>{const request=db.transaction('files','readonly').objectStore('files').getAll();request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});
+ return {files:new Map(loaded.map(o=>[o.path,{data:new Uint8Array(o.data),writable:true}])),write(path,data){if(/\/Save\d+\.(?:tmp|enc)$/i.test(path))return Promise.resolve();return new Promise((resolve,reject)=>{const transaction=db.transaction('files','readwrite'),store=transaction.objectStore('files');if(data===null)store.delete(path);else store.put({path,data});transaction.oncomplete=()=>resolve();transaction.onerror=()=>reject(transaction.error);});},close(){db.close();}};
+}

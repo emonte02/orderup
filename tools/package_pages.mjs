@@ -1,0 +1,21 @@
+/** Package only the browser port. Original game files never enter the website. */
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import {fileURLToPath} from 'node:url';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const out=path.join(root,'_site');
+const record=JSON.parse(fs.readFileSync(path.join(root,'port/build/emulator-build.json')));
+const bundle=fs.readFileSync(path.join(root,'port/build/unicorn-arm.js'));
+if(crypto.createHash('sha256').update(bundle).digest('hex')!==record.bundle_sha256)throw Error('Emulator bundle differs from its build record. Rebuild before publishing.');
+fs.rmSync(out,{recursive:true,force:true});fs.mkdirSync(out,{recursive:true});
+const copy=(source,target)=>fs.copyFileSync(path.join(root,source),path.join(out,target));
+for(const name of ['app.mjs','loop.mjs','mouse.mjs','game-files.mjs'])copy('port/web/'+name,name);
+const html=fs.readFileSync(path.join(root,'port/web/index.html'),'utf8').replace('data-game-files="server"','data-game-files="import"');
+fs.writeFileSync(path.join(out,'index.html'),html);
+fs.mkdirSync(path.join(out,'runtime'));
+for(const name of fs.readdirSync(path.join(root,'port/runtime')).filter(name=>name.endsWith('.mjs')))copy('port/runtime/'+name,'runtime/'+name);
+copy('port/build/unicorn-arm.js','unicorn.js');copy('port/build/emulator-build.json','emulator-build.json');
+fs.cpSync(path.join(root,'port/licenses'),path.join(out,'licenses'),{recursive:true});
+copy('port/THIRD_PARTY.md','THIRD_PARTY.md');fs.writeFileSync(path.join(out,'.nojekyll'),'');
+console.log('Packaged the browser player in _site/ (no original game files).');

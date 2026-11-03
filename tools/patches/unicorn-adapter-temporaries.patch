@@ -1,0 +1,31 @@
+--- a/qemu/tcg/tcg.c
++++ b/qemu/tcg/tcg.c
+@@ -1441,6 +1441,7 @@
+     unsigned sizemask, flags;
+     TCGHelperInfo *info;
+     TCGOp *op;
++    TCGv_i64 wasm_adapter_ext[MAX_OPC_PARAM] = { NULL };
+ 
+     info = g_hash_table_lookup(tcg_ctx->helper_table, (gpointer)func);
+     flags = info->flags;
+@@ -1500,6 +1501,7 @@
+             TCGv_i64 ext_temp = tcg_temp_new_i64(tcg_ctx);
+             TCGv_i64 ext_orig = temp_tcgv_i64(tcg_ctx, args[i]);
+             tcg_gen_ext32u_i64(tcg_ctx, ext_temp, ext_orig);
++            wasm_adapter_ext[i] = ext_temp;
+             args[i] = tcgv_i64_temp(tcg_ctx, ext_temp);
+         }
+     }
+@@ -1580,6 +1582,12 @@
+     op->args[pi++] = (uintptr_t)func;
+     op->args[pi++] = flags;
+     TCGOP_CALLI(op) = real_args;
++    /* Adapter argument temporaries expire at this call, like ordinary helper inputs. */
++    for (i = 0; i < nargs; i++) {
++        if (wasm_adapter_ext[i]) {
++            tcg_temp_free_i64(tcg_ctx, wasm_adapter_ext[i]);
++        }
++    }
+ 
+     /* Make sure the fields didn't overflow.  */
+     tcg_debug_assert(TCGOP_CALLI(op) == real_args);

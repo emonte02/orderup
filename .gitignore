@@ -1,0 +1,47 @@
+# Track only the new browser port and the files needed to build/play it.
+/*
+!/.gitignore
+!/.gitattributes
+!/README.md
+!/PLAYING.md
+!/Play Order Up.command
+!/.github/
+!/port/
+!/tools/
+
+# Keep only the serving, packaging, emulator build, and browser-test tools.
+/tools/*
+!/tools/serve.mjs
+!/tools/package_pages.mjs
+!/tools/build_emulator.py
+!/tools/patches/
+!/tools/browser/
+/tools/browser/*
+!/tools/browser/package.json
+!/tools/browser/package-lock.json
+
+# The shipped runtime is the only generated binary needed by the website.
+/port/build/*
+!/port/build/unicorn-arm.js
+!/port/build/emulator-build.json
+
+# Original APK/OBB files, recovered data, reports, saves, and private environments.
+*.apk
+*.obb
+*.xapk
+*.so
+*.dylib
+*.enc
+*.tmp
+*.bin
+*.wad
+/originals/
+/assets/
+/analysis/
+/_site/
+**/node_modules/
+**/__pycache__/
+*.pyc
+.env
+.env.*
+.DS_Store

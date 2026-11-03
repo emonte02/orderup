@@ -1,0 +1,3 @@
+# Preserve generated output and the context lines in upstream source patches.
+port/build/unicorn-arm.js linguist-generated=true whitespace=-blank-at-eof
+tools/patches/*.patch whitespace=-blank-at-eol

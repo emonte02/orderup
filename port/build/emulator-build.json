@@ -1,0 +1,21 @@
+{
+  "source": "1220477c7fb0f8fe4b500f4bd211de52f6dfe638",
+  "unicorn_source": "8028ec436f2d9376525352dd38ed9ed6b9f6be10",
+  "patches": {
+    "unicorn-adapter-temporaries.patch": "98554b535687fd72cbcd5416503b60181e7213c0a79ac1bcb9b242e32e04aa6d",
+    "unicorn-temp-pressure.patch": "0c70f6d7eee37d2474548d8cf96deaa7c656b0dc9415f0a60eb8877e6194e075"
+  },
+  "debug": false,
+  "cmake_c_flags": "-O3 -g -DNDEBUG -flto",
+  "link_flags": [
+    "-O3",
+    "-flto",
+    "ASSERTIONS=0",
+    "STACK_OVERFLOW_CHECK=0"
+  ],
+  "host_source_sha256": "c7df1db469ad6621e6fff730b70a2d61f3f0c44987d5f34fc4d0b6b8589cf85d",
+  "hot_source_sha256": "76a52bc5619cb619e970ff2ebb6455523b26bb519a7a593824a67bdef3635ef7",
+  "decompression_source_sha256": "4532f83dc62b03c7ac58ec0f6b266b07cf9f99a3d0b7e6f789a92b08b7e42657",
+  "zlib_port": "Emscripten USE_ZLIB=1",
+  "bundle_sha256": "3dc2b6c262bde385c206f3bb05c774401250c07ecb85077f5ad1dfb792a03584"
+}

@@ -1,0 +1,11 @@
+--- a/qemu/include/tcg/tcg.h
++++ b/qemu/include/tcg/tcg.h
+@@ -947,7 +947,7 @@
+      * 16-bit unsigned offsets, TranslationBlock.jmp_reset_offset[]
+      * and TCGContext.gen_insn_end_off[].
+      */
+-    return tcg_ctx->nb_ops >= 4000;
++    return tcg_ctx->nb_ops >= 4000 || tcg_ctx->nb_temps >= TCG_MAX_TEMPS - 64;
+ }
+ 
+ /* pool based memory allocation */
