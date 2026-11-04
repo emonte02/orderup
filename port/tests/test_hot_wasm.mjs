@@ -3,10 +3,11 @@ import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {ArmRuntime} from '../runtime/runtime.mjs';
 const root=new URL('../../',import.meta.url),read=p=>fs.readFileSync(new URL(p,root)),require=createRequire(import.meta.url);
-const uc=await require('../build/unicorn-arm.js')({print:()=>{},printErr:()=>{}}),r=new ArmRuntime(uc,read('analysis/game-apk/lib/armeabi-v7a/libOrderUp.so'));
+const bundle=process.env.OU_EMULATOR_BUNDLE||'../build/unicorn-arm.js';
+const uc=await require(bundle)({print:()=>{},printErr:()=>{}}),r=new ArmRuntime(uc,read('analysis/game-apk/lib/armeabi-v7a/libOrderUp.so'));
 const vectors=JSON.parse(read('analysis/hot-native-vectors.json'));
 try{
- assert.equal(r.cAccelerations.length,3);assert(r.cAccelerations.includes('original zlib decompressor'));r.map(0x700000,0x8000);
+ for(const name of ['original mono ADPCM mixer','original font character lookup','original zlib decompressor'])assert(r.cAccelerations.includes(name),name);assert(r.cAccelerations.includes('original zlib decompressor'));r.map(0x700000,0x8000);
  for(const [i,c] of vectors.audio.entries()){
   r.write(0x700000,Buffer.from(c.input,'hex'));r.write(0x701000,Buffer.from(c.initial,'hex'));
   await r.call('_ZN3Sys5Audio23DecodeMonoADPCMFrameMixEPKhPsii',[0x700000,0x701000,c.volume,c.samples]);
@@ -18,6 +19,6 @@ try{
   assert.equal(await r.call('_ZN4Font4Font14get_char_indexEw',[0x703000,c.character]),c.expected,'Original font lookup '+i);
  }
  if(r.nativeHot){assert.equal(r.nativeHot.report().font_lookups,vectors.font_cases.length);assert.equal(r.nativeHot.report().audio_blocks,vectors.audio.length);const c=vectors.font_cases.at(-1);r.nativeHot.setEnabled(false);assert.equal(await r.call('_ZN4Font4Font14get_char_indexEw',[0x703000,c.character]),c.expected);r.nativeHot.setEnabled(true);assert.equal(await r.call('_ZN4Font4Font14get_char_indexEw',[0x703000,c.character]),c.expected);}
- const report={native_c_entries:r.nativeHot?.report()||null,audio_blocks:vectors.audio.length,font_lookups:vectors.font_cases.length,bit_exact:true,original_arm_entry_to_c_wasm:true,accelerations:r.cAccelerations,build:JSON.parse(read('port/build/emulator-build.json'))};
- fs.writeFileSync(new URL('analysis/hot-wasm-tests.json',root),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report,null,2));
+ const report={native_c_entries:r.nativeHot?.report()||null,audio_blocks:vectors.audio.length,font_lookups:vectors.font_cases.length,bit_exact:true,original_arm_entry_to_c_wasm:true,accelerations:r.cAccelerations,bundle};
+ fs.writeFileSync(new URL('analysis/'+(process.env.OU_HOT_REPORT||'hot-wasm-tests.json'),root),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report,null,2));
 }finally{r.close();}

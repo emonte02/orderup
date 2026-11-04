@@ -1,0 +1,68 @@
+--- a/uc.c
++++ b/uc.c
+@@ -909,6 +909,25 @@
+     return UC_ERR_OK;
+ }
+ 
++#ifdef OU_MAPPING_CACHE
++/* Public memory APIs already bypass guest permissions/hooks. Only enabled,
++ * ordinary root RAM with no overlays can use the direct read. Keep original
++ * paths for MMIO, range crossings, subpages and snapshot/CoW state. */
++static MemoryRegion *ou_api_ram_region(uc_engine *uc, uint64_t address,
++                                       uint64_t size)
++{
++    if (!size || uc->snapshot_level) return NULL;
++    MemoryRegion *mr = uc->memory_mapping(uc, address);
++    if (mr && mr->enabled && mr->ram && mr->ram_block && mr->ram_block->host &&
++        !mr->subpage && !mr->is_iommu && mr->container == uc->system_memory &&
++        QTAILQ_EMPTY(&mr->subregions) && address >= mr->addr &&
++        address < mr->end && size <= mr->end-address &&
++        mr->end-mr->addr <= mr->ram_block->used_length)
++        return mr;
++    return NULL;
++}
++#endif
++
+ UNICORN_EXPORT
+ uc_err uc_mem_read(uc_engine *uc, uint64_t address, void *_bytes, uint64_t size)
+ {
+@@ -916,6 +935,18 @@
+     uint8_t *bytes = _bytes;
+ 
+     UC_INIT(uc);
++
++#ifdef OU_MAPPING_CACHE
++    MemoryRegion *direct = ou_api_ram_region(uc, address, size);
++    if (direct) {
++        /* qemu_map_ram_ptr(mr, offset) is block->host + offset in this fork. */
++        memcpy(bytes, (uint8_t *)direct->ram_block->host +
++                      (address-direct->addr), size);
++        restore_jit_state(uc);
++        return UC_ERR_OK;
++    }
++#endif
++
+ 
+     if (!check_mem_area(uc, address, size)) {
+         restore_jit_state(uc);
+@@ -956,6 +987,20 @@
+     const uint8_t *bytes = _bytes;
+ 
+     UC_INIT(uc);
++
++#ifdef OU_MAPPING_CACHE
++    MemoryRegion *direct = ou_api_ram_region(uc, address, size);
++    if (direct) {
++        uint32_t operms = direct->perms;
++        if (!(operms & UC_PROT_WRITE)) uc->readonly_mem(direct, false);
++        /* Retain address-space writes for dirty bits and code invalidation. */
++        bool written = uc->write_mem(&uc->address_space_memory, address, bytes, size);
++        if (!(operms & UC_PROT_WRITE)) uc->readonly_mem(direct, true);
++        restore_jit_state(uc);
++        return written ? UC_ERR_OK : UC_ERR_WRITE_UNMAPPED;
++    }
++#endif
++
+ 
+     if (!check_mem_area(uc, address, size)) {
+         restore_jit_state(uc);

@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {ArmRuntime} from '../runtime/runtime.mjs';
 import {runARMProbe} from './arm_probe_shared.mjs';
-const require=createRequire(import.meta.url),create=require('../build/unicorn-arm.js');
+const require=createRequire(import.meta.url),create=require(process.env.OU_EMULATOR_BUNDLE||'../build/unicorn-arm.js');
 const read=p=>fs.readFileSync(new URL('../../'+p,import.meta.url)),json=p=>JSON.parse(read(p));
 const module=await create({print:()=>{},printErr:()=>{}});
 const cpu=runARMProbe(module,read('port/build/crc-guest-image.bin'),json('analysis/crc-wasm-vectors.json'),json('analysis/arm-vfp-probe-vectors.json'));
@@ -35,5 +35,5 @@ try{
  const testPath=r.cstring('/save/native-resize-test.bin'),testMode=r.cstring('w+b'),testFile=await r.call(r.trap('fopen'),[testPath,testMode]),nativeStream=r.malloc(128);await r.call('_ZN4File13AndroidStreamC1Eb',[nativeStream,0]);r.u32(nativeStream+0x28,testFile);r.u8(nativeStream+0x18,0);assert.equal(await r.call('_ZN4File13AndroidStream9SetLengthEj',[nativeStream,16]),1);assert.equal(r.files.get('/save/native-resize-test.bin').data.length,16);const testBytes=r.malloc(16);r.write(testBytes,Uint8Array.of(1,2,3,4));assert.equal(await r.call(r.trap('fwrite'),[testBytes,4,1,testFile]),1);assert.equal(await r.call('_ZN4File13AndroidStream9SetLengthEj',[nativeStream,2]),1);assert.equal(await r.call(r.trap('ftell'),[testFile]),2);assert.deepEqual([...r.files.get('/save/native-resize-test.bin').data],[1,2]);assert.equal(await r.call('_ZN4File13AndroidStream9SetLengthEj',[nativeStream,8]),1);assert.deepEqual([...r.files.get('/save/native-resize-test.bin').data],[1,2,0,0,0,0,0,0]);await r.call(r.trap('fclose'),[testFile]);
  const aliasPath=r.cstring('/save/save/Save99.tmp'),aliasFile=await r.call(r.trap('fopen'),[aliasPath,testMode]);await r.call(r.trap('fwrite'),[testBytes,4,1,aliasFile]);await r.call(r.trap('fclose'),[aliasFile]);assert.deepEqual([...r.files.get('/save/Save99.tmp').data],[1,2,3,4],'Save mount paths resolve identically for native streams and C stdio');
  const report={activity_indicator_callback_passed:true,save_mount_alias_passed:true,native_file_resize_passed:true,open_restaurant_timer_guard_passed:true,offline_ad_completion_passed:true,achievement_array_passed:true,shared_memory_coherence_passed:true,code_invalidation_passed:true,jni_local_lifetimes_passed:true,initializers:84,isolated_constructor_reference_writes:vectors.length,emulator_probes:cpu,nested_guest_comparator_passed:true,script_numeric_conversion_passed:true,scheduler_sleep_passed:true,busy_poll_worker_wake_passed:true,thumb_import_return_passed:true,memory_helper_cases:memory.cases.length,elf:r.elf.loadReport,playable:false};
- fs.writeFileSync(new URL('../../analysis/runtime-tests.json',import.meta.url),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report,null,2));
+ fs.writeFileSync(new URL('../../analysis/'+(process.env.OU_RUNTIME_REPORT||'runtime-tests.json'),import.meta.url),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report,null,2));
 }finally{r.close();}

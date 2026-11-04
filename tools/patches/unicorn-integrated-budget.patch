@@ -1,0 +1,99 @@
+diff --git a/include/uc_priv.h b/include/uc_priv.h
+index c3132dc..db2f67e 100644
+--- a/include/uc_priv.h
++++ b/include/uc_priv.h
+@@ -414,6 +414,11 @@ struct uc_struct {
+                           // workaround to treat the IT block as a whole block.
+     bool init_done;       // Whether the initialization is done.
+ 
++    /* Optional cooperative WASM budget, polled by the existing TB prologue. */
++    double ou_budget_deadline;
++    uint32_t ou_budget_blocks, ou_budget_stops;
++    bool ou_budget_enabled;
++
+     sigjmp_buf jmp_bufs[UC_MAX_NESTED_LEVEL]; // To support nested uc_emu_start
+     int nested_level;                         // Current nested_level
+ 
+diff --git a/qemu/accel/tcg/tcg-runtime.c b/qemu/accel/tcg/tcg-runtime.c
+index 777287a..de1f14f 100644
+--- a/qemu/accel/tcg/tcg-runtime.c
++++ b/qemu/accel/tcg/tcg-runtime.c
+@@ -165,8 +165,29 @@ void HELPER(exit_atomic)(CPUArchState *env)
+     cpu_loop_exit_atomic(env_cpu(env), GETPC());
+ }
+ 
++#ifdef OU_TCI_INTEGRATED_BUDGET
++#include <emscripten/emscripten.h>
++#endif
++
+ void HELPER(check_exit_request)(void *p, uint32_t in_delay_slot) {
+     uc_engine *uc = p;
++#ifdef OU_TCI_INTEGRATED_BUDGET
++    bool budget_boundary = (in_delay_slot & 0x80000000u) != 0;
++    in_delay_slot &= 0x7fffffffu;
++    /* Check before executing this block. Preserve the existing delay-slot and
++     * CPU-state restore path, including Thumb IT blocks and external stop hooks.
++     */
++    if (budget_boundary && uc->ou_budget_enabled && !in_delay_slot &&
++        ((++uc->ou_budget_blocks & 127u) == 0) &&
++        emscripten_get_now() >= uc->ou_budget_deadline) {
++        uc->ou_budget_stops++;
++        /* translator.c synchronized the block-entry PC before this helper.
++         * No instruction-start metadata exists at this point; restoring from
++         * GETPC here can restore a previous instruction instead. */
++        uc->skip_sync_pc_on_exit = true;
++        uc_emu_stop(uc);
++    }
++#endif
+ 
+     if (cpu_loop_exit_requested(uc->cpu) && !in_delay_slot) {
+         // There are stil something we have to before exiting to be compatible with previous behaviors
+diff --git a/qemu/accel/tcg/translator.c b/qemu/accel/tcg/translator.c
+index 72f21c4..3db4fef 100644
+--- a/qemu/accel/tcg/translator.c
++++ b/qemu/accel/tcg/translator.c
+@@ -82,6 +82,11 @@ void translator_loop(const TranslatorOps *ops, DisasContextBase *db,
+ 
+     // tcg_dump_ops(tcg_ctx, false, "translator loop");
+ 
++    /* Budget preemption is at a block boundary, before insn_start metadata.
++     * Sync PC explicitly, just as the original global block hook did. */
++#ifdef OU_TCI_INTEGRATED_BUDGET
++    ops->pc_sync(db, cpu);
++#endif
+     /* Start translating.  */
+     gen_tb_start(tcg_ctx, db->tb);
+     // tcg_dump_ops(tcg_ctx, false, "tb start");
+diff --git a/qemu/include/exec/gen-icount.h b/qemu/include/exec/gen-icount.h
+index 8b484cb..9ad2b40 100644
+--- a/qemu/include/exec/gen-icount.h
++++ b/qemu/include/exec/gen-icount.h
+@@ -33,7 +33,11 @@ static inline void gen_io_end(TCGContext *tcg_ctx)
+ static inline void gen_tb_start(TCGContext *tcg_ctx, TranslationBlock *tb)
+ {
+     TCGv_ptr puc = tcg_const_ptr(tcg_ctx, tcg_ctx->uc);
++#ifdef OU_TCI_INTEGRATED_BUDGET
++    TCGv_i32 tmp = tcg_const_i32(tcg_ctx, 0x80000000u);
++#else
+     TCGv_i32 tmp = tcg_const_i32(tcg_ctx, 0);
++#endif
+     // Unicorn:
+     //    We CANT'T use brcondi_i32 here or we will fail liveness analysis
+     //    because it marks the end of BB
+diff --git a/uc.c b/uc.c
+index 75b89a0..a2154e3 100644
+--- a/uc.c
++++ b/uc.c
+@@ -3068,3 +3068,12 @@ void trace_end(uc_tracer *tracer, trace_loc loc, const char *fmt, ...)
+             (double)(end - tracer->starts[loc]) / (double)(1000));
+ }
+ #endif
++
++/* Optional WASM host budget; per-engine state survives CPU context switches. */
++void ou_tci_budget_begin(uc_engine *uc, double deadline) {
++    uc->ou_budget_deadline = deadline;
++    uc->ou_budget_enabled = true;
++}
++void ou_tci_budget_disable(uc_engine *uc) { uc->ou_budget_enabled = false; }
++uint32_t ou_tci_budget_blocks(uc_engine *uc) { return uc->ou_budget_blocks; }
++uint32_t ou_tci_budget_stops(uc_engine *uc) { return uc->ou_budget_stops; }

@@ -1,10 +1,10 @@
 # Order Up!! To Go — browser port
 
-### [▶ Play in your browser](https://emonte02.github.io/orderup/)
+### [▶ Play in your browser](https://emonte02.github.io/orderup/?v=1c2b0ec763c099b0)
 
 **Open the player and click Start game. Everything needed downloads automatically.** No APK selection, OBB selection, installation, or local server is needed.
 
-The original 3D cooking game runs in desktop Chrome with mouse controls, audio, and saved progress. The first download is about **187 MB**. Allow **1–2 minutes** for the engine to start after loading and keep the tab selected. The progress indicator shows download and startup stages.
+The original 3D cooking game runs in desktop Chrome with mouse controls, audio, and saved progress. The first download is about **187 MB**. Keep the tab selected while the engine starts. The progress indicator shows download and startup stages.
 
 GitHub cannot run interactive games inside a repository README. The **Play** link opens the complete GitHub Pages player.
 
@@ -17,7 +17,7 @@ GitHub cannot run interactive games inside a repository README. The **Play** lin
 
 Saves belong to the browser and site address. GitHub Pages and the local Mac launcher have separate saves. Clearing site data removes saved progress. See [PLAYING.md](PLAYING.md).
 
-Busy kitchens measured about **20 fps** on the development Mac. Retired purchases, ads, and leaderboards are unavailable.
+The optimized build reaches the menu in about **10–11 seconds** on the development M5 Max Mac once the game files are available. Measured restaurant kitchens average **38–49 fps**; performance checks include the tournament demonstration and its loading handoff. Original graphics, sound and game timing are retained. Results depend on the computer and browser; occasional asset-loading stalls remain. See the measured scene coverage in [the architecture notes](port/ARCHITECTURE.md). Retired purchases, ads, and leaderboards are unavailable.
 
 ## What this port contains
 

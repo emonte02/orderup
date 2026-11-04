@@ -28,14 +28,14 @@ export async function waitCookingQuality(page,{timeout=22000}={}){
 export async function cookPot(page){if(!(await labels(page)).includes('Stir!'))throw Error('Pot is not the active cooking tool');await circlePot(page);const quality=await waitCookingQuality(page);await plateIngredient(page,480,270);return quality;}
 export async function sautePan(page){if(!(await labels(page)).includes('Flip!'))throw Error('Pan is not the active cooking tool');await drag(page,565,425,535,190,300);const quality=await waitCookingQuality(page);await plateIngredient(page,480,245);return quality;}
 export async function grateCheese(page){
- if(!(await labels(page)).includes('Grate!'))throw Error('Grater is not the active cooking tool');
+ if(!(await labels(page)).some(label=>/^[GC]rate!$/i.test(label)))throw Error('Grater is not the active cooking tool');
  const b=await page.locator('canvas').boundingBox(),move=(x,y)=>page.mouse.move(b.x+x*b.width/960,b.y+y*b.height/640);
  await move(465,230);await page.mouse.down();
  try{for(let i=0;i<32;i++){await move(i%2?465:520,i%2?230:380);await page.waitForTimeout(110);}}
  finally{await page.mouse.up();}
  const start=Date.now();let text=await labels(page);
- while(text.some(label=>label==='Grate!')&&Date.now()-start<12000){await drag(page,465,230,520,380,180);await drag(page,520,380,465,230,180);text=await labels(page);}
- if(text.some(label=>label==='Grate!'))throw Error('Cheese grating did not finish');
+ while(text.some(label=>/^[GC]rate!$/i.test(label))&&Date.now()-start<12000){await drag(page,465,230,520,380,180);await drag(page,520,380,465,230,180);text=await labels(page);}
+ if(text.some(label=>/^[GC]rate!$/i.test(label)))throw Error('Cheese grating did not finish');
  await plateIngredient(page,400,360);return text.find(label=>/^(Poor|OK|Good|Perfect)!$/.test(label))||'completed';
 }
 

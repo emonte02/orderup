@@ -1,13 +1,13 @@
 import {ArmElf} from './elf.mjs';
 import {GuestMemory} from './memory.mjs';
 import {installLibc} from './libc.mjs';
-import {installThreads} from './threads.mjs';
+import {installThreads,createTaskQueue} from './threads.mjs';
 import {installMemoryHelpers,installHotHelpers,installCompatibilityGuards,installDecompressionHelper} from './optimizations.mjs';
 import {createGraphicsBatch} from './graphics_batch.mjs';
 import {installJNI} from './jni.mjs';
 export class ArmRuntime extends GuestMemory {
- constructor(uc,elfBytes,{files=new Map(),graphics=null,audio=null,optimizeMemory=true,optimizeHot=true,optimizeDecompression=true,compatibilityFixes=true,batchGraphics=true,onSave=()=>{},log=()=>{},yieldHost=()=>new Promise(r=>setTimeout(r,0))}={}){
-  const engine=new uc.Unicorn(uc.ARCH_ARM,uc.MODE_ARM);super(uc,engine);this.elf=new ArmElf(elfBytes);this.log=log;this.files=files;this.graphics=graphics;this.audio=audio;this.onSave=onSave;this.yieldHost=yieldHost;
+ constructor(uc,elfBytes,{files=new Map(),graphics=null,audio=null,optimizeMemory=true,optimizeHot=true,optimizeDecompression=true,compatibilityFixes=true,batchGraphics=true,onSave=()=>{},log=()=>{},yieldHost}={}){
+  const engine=new uc.Unicorn(uc.ARCH_ARM,uc.MODE_ARM);super(uc,engine);this.elf=new ArmElf(elfBytes);this.log=log;this.files=files;this.graphics=graphics;this.audio=audio;this.onSave=onSave;this.hostYieldQueue=yieldHost?null:createTaskQueue();this.yieldHost=yieldHost||(()=>this.hostYieldQueue.yield());
   this.regs=[...Array(13)].map((_,i)=>uc['ARM_REG_R'+i]).concat([uc.ARM_REG_SP,uc.ARM_REG_LR,uc.ARM_REG_PC]);
   this.functions=new Map();this.traps=new Map();this.trapNext=0x0f000100;this.returnTrap=0x0f000000;this.exitTrap=0x0f000004;this.map(0x0f000000,0x10000);
   this.calls=new Map();this.recentCalls=[];this.events=[];this.eventTotal=0;const pushEvent=this.events.push.bind(this.events);this.events.push=(...items)=>{this.eventTotal+=items.length;if(this.events.length>2048)this.events.splice(0,1024);return pushEvent(...items);};this.clockStart=performance.now();this.clockEpoch=Date.now();this.roundRobin=0;this.pending=null;this.active=null;this.nested=0;
@@ -86,7 +86,7 @@ export class ArmRuntime extends GuestMemory {
  }
  invoke(address,args=[]){
   if(++this.nested>16)throw Error('Guest callback nesting exceeded');const previousABI=this.abiArgs;this.abiArgs=null;const context=this.engine.context_alloc(),thread=this.active,state=thread.state;this.engine.context_save(context);
-  try{const stack=this.reg(13)-0x1000;const temp={...thread,stack};this.prepare(temp,address,args);thread.state='ready';let n=0;while(thread.state==='ready'){this.slice();if(++n>100000)throw Error('Guest callback exceeded budget');if(thread.state!=='ready'&&thread.state!=='idle')throw Error('Blocking from synchronous guest callback');}return thread.result;}finally{this.engine.context_restore(context);this.engine.context_free(context);thread.state=state;this.nested--;this.abiArgs=previousABI;}
+  try{const stack=this.reg(13)-0x1000,fpscr=this.cpuRegister(this.uc.ARM_REG_FPSCR);const temp={...thread,stack};this.prepare(temp,address,args);this.cpuRegister(this.uc.ARM_REG_FPSCR,fpscr);thread.state='ready';let n=0;while(thread.state==='ready'){this.slice();if(++n>100000)throw Error('Guest callback exceeded budget');if(thread.state!=='ready'&&thread.state!=='idle')throw Error('Blocking from synchronous guest callback');}return thread.result;}finally{this.engine.context_restore(context);this.engine.context_free(context);thread.state=state;this.nested--;this.abiArgs=previousABI;}
  }
  async initialize(){for(const [i,a] of this.elf.initializers.entries()){await this.call(a);this.log({type:'initializer',index:i,address:a});}return this.elf.loadReport;}
  async boot({width=960,height=640}={}){
@@ -94,5 +94,5 @@ export class ArmRuntime extends GuestMemory {
   await this.call('Java_com_svsgames_orderup_OrderUpJNILib_init',args,{timeoutMs:600000});
  }
  report(){return {current_entry:this.currentEntry||null,decompression:this.decompression?.report()||null,graphics_batch:this.graphicsBatch?.report()||null,native_c_ports:this.nativeHot?.report()||null,elf:this.elf.loadReport,c_accelerations:this.cAccelerations||[],compatibility_fixes:this.compatibilityFixes||[],heap_high_water:this.heapTop-this.heapStart,allocations:this.blocks.size,threads:this.threads.map(t=>({id:t.id,state:t.state,wait:t.wait})),calls:Object.fromEntries(this.calls),recent_calls:this.recentCalls,events:this.events.slice(-100),event_count:this.eventTotal,java_objects:this.javaObjects.size,graphics:this.graphics?.report?.(),audio:this.audio?.report?.()};}
- close(){if(this.registerScratch)this.uc._free(this.registerScratch);if(this.abiScratch)this.uc._free(this.abiScratch);if(this.scratch)this.uc._free(this.scratch);for(const t of this.threads)this.engine.context_free(t.ctx);this.engine.hook_del(this.hook);this.engine.hook_del(this.invalidHook);for(const hook of this.compatibilityHooks||[]){if(hook.native){const error=this.uc.ccall('uc_hook_del','number',['pointer','pointer'],[this.uc.getValue(this.engine.handle_ptr,'*'),hook.native]);if(error)throw Error('Could not release compatibility hook '+error);}else this.engine.hook_del(hook);}if(this.budgetHook!==undefined)this.engine.hook_del(this.budgetHook);if(this.nativeBudget)this.uc._ou_budget_destroy(this.nativeBudget);this.graphicsBatch?.close();this.nativeHot?.close();this.engine.close();this.releaseMappings();}
+ close(){this.hostYieldQueue?.close();if(this.registerScratch)this.uc._free(this.registerScratch);if(this.abiScratch)this.uc._free(this.abiScratch);if(this.scratch)this.uc._free(this.scratch);for(const t of this.threads)this.engine.context_free(t.ctx);this.engine.hook_del(this.hook);this.engine.hook_del(this.invalidHook);for(const hook of this.compatibilityHooks||[]){if(hook.native){const error=this.uc.ccall('uc_hook_del','number',['pointer','pointer'],[this.uc.getValue(this.engine.handle_ptr,'*'),hook.native]);if(error)throw Error('Could not release compatibility hook '+error);}else this.engine.hook_del(hook);}if(this.budgetHook!==undefined)this.engine.hook_del(this.budgetHook);if(this.nativeBudget)this.uc._ou_budget_destroy(this.nativeBudget);this.graphicsBatch?.close();this.nativeHot?.close();this.engine.close();this.releaseMappings();}
 }

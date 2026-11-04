@@ -4,7 +4,8 @@ import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {ArmRuntime} from '../runtime/runtime.mjs';
 const require=createRequire(import.meta.url),root=new URL('../../',import.meta.url),read=p=>fs.readFileSync(new URL(p,root)),hash=b=>crypto.createHash('sha256').update(b).digest('hex');
-const uc=await require('../build/unicorn-arm.js')({print:()=>{},printErr:()=>{}}),r=new ArmRuntime(uc,read('analysis/game-apk/lib/armeabi-v7a/libOrderUp.so'),{optimizeDecompression:true}),reference=JSON.parse(read('analysis/decompression-native-vectors.json'));
+const bundle=process.env.OU_EMULATOR_BUNDLE||'../build/unicorn-arm.js';
+const uc=await require(bundle)({print:()=>{},printErr:()=>{}}),r=new ArmRuntime(uc,read('analysis/game-apk/lib/armeabi-v7a/libOrderUp.so'),{optimizeDecompression:true}),reference=JSON.parse(read('analysis/decompression-native-vectors.json'));
 try{
  assert(r.decompression,'C decompressor export is present');
  for(const c of reference.vectors){
@@ -13,5 +14,5 @@ try{
   assert.equal(count,c.expected_count,c.name+' original return value');assert.equal(hash(r.read(region,c.region_size)),c.expected_sha256,c.name+' original output and guards');assert([...r.read(object,16)].every(x=>x===0x5a),c.name+' object unchanged');r.free(object);r.free(region);
  }
  const entry=r.elf.address(reference.source_symbol);r.decompression.setEnabled(false);assert.notEqual(r.u32(entry),0xe51ff004,'original ARM entry restored');r.decompression.setEnabled(true);assert.equal(r.u32(entry),0xe51ff004,'C port re-enabled');
- const report={original_arm_cases:reference.vectors.length,return_and_memory_bit_exact:true,overlap_and_truncation_verified:true,original_entry_switch_verified:true,decompression:r.decompression.report(),build:JSON.parse(read('port/build/emulator-build.json'))};fs.writeFileSync(new URL('analysis/decompression-wasm-tests.json',root),JSON.stringify(report,null,2)+'\n');console.log(report);
+ const report={original_arm_cases:reference.vectors.length,return_and_memory_bit_exact:true,overlap_and_truncation_verified:true,original_entry_switch_verified:true,decompression:r.decompression.report(),bundle};fs.writeFileSync(new URL('analysis/'+(process.env.OU_DECOMPRESSION_REPORT||'decompression-wasm-tests.json'),root),JSON.stringify(report,null,2)+'\n');console.log(report);
 }finally{r.close();}

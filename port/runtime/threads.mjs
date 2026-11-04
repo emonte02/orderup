@@ -23,3 +23,10 @@ export function installThreads(r){
  f('sched_yield',()=>{r.active.forceYield=true;return 0;});f('usleep',()=>{const t=r.active,delay=a(0)/1000;r.ret(0);t.state='sleep';t.wake=r.virtualMs+Math.max(0.001,delay);return undefined;});
  r.wakeSleepers=()=>{for(const t of r.threads)if(t.state==='sleep'&&t.wake<=r.virtualMs)ready(t);};
 }
+
+/** Yield to the browser without a nested zero-delay timer's 4ms clamp. */
+export function createTaskQueue(){
+ let sequence=0,closed=false;const pending=new Map(),channel=typeof MessageChannel==='function'?new MessageChannel():null;
+ if(channel){channel.port1.onmessage=({data})=>{const fn=pending.get(data);pending.delete(data);if(fn)fn();if(!pending.size)channel.port1.unref?.();};channel.port1.unref?.();channel.port2.unref?.();}
+ const queue={schedule(fn){if(closed)throw Error('Task queue is closed');const id=++sequence;if(channel){pending.set(id,fn);channel.port1.ref?.();channel.port2.postMessage(id);}else pending.set(id,setTimeout(()=>{pending.delete(id);fn();},0));return id;},cancel(id){if(!channel)clearTimeout(pending.get(id));pending.delete(id);},yield(){return new Promise(resolve=>queue.schedule(resolve));},close(){closed=true;if(!channel)for(const timer of pending.values())clearTimeout(timer);pending.clear();channel?.port1.close();channel?.port2.close();}};return queue;
+}

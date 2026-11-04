@@ -27,7 +27,7 @@ try{
  const download=await page.evaluate(()=>({bytes_loaded:orderup.startup.bytes_loaded,bytes_total:orderup.startup.bytes_total,files_loaded:orderup.startup.files_loaded}));assert.equal(download.bytes_loaded,download.bytes_total);assert.equal(download.files_loaded,6);
  await network.send('Network.emulateNetworkConditions',{offline:false,latency:0,downloadThroughput:-1,uploadThroughput:-1});
  await page.click('#start');await page.waitForFunction(()=>orderup.state==='failed'||orderup.state==='initializing',null,{timeout:120000});assert.equal(await page.evaluate(()=>orderup.error),null);
- assert.equal(await page.locator('#loading-progress').getAttribute('value'),null);assert((await page.locator('#loading-detail').textContent()).includes('1–2 minutes'));assert((await page.locator('#loading-elapsed').textContent()).includes('elapsed'));
+ assert.equal(await page.locator('#loading-progress').getAttribute('value'),null);assert((await page.locator('#loading-detail').textContent()).includes('Starting the game'));assert((await page.locator('#loading-elapsed').textContent()).includes('elapsed'));
  await page.screenshot({path:artifact('loading-progress-browser.png').pathname});
  await page.waitForFunction(()=>orderup.state==='failed'||orderup.frames>5,null,{timeout:600000});await page.locator('#loading-panel').waitFor({state:'hidden'});assert.equal(await page.evaluate(()=>orderup.error),null);assert.equal(await page.locator('#start').isVisible(),false);
  await page.evaluate(()=>orderup.controller.pause());const frames=await page.evaluate(()=>orderup.frames);

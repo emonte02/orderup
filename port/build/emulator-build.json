@@ -3,19 +3,31 @@
   "unicorn_source": "8028ec436f2d9376525352dd38ed9ed6b9f6be10",
   "patches": {
     "unicorn-adapter-temporaries.patch": "98554b535687fd72cbcd5416503b60181e7213c0a79ac1bcb9b242e32e04aa6d",
-    "unicorn-temp-pressure.patch": "0c70f6d7eee37d2474548d8cf96deaa7c656b0dc9415f0a60eb8877e6194e075"
+    "unicorn-temp-pressure.patch": "0c70f6d7eee37d2474548d8cf96deaa7c656b0dc9415f0a60eb8877e6194e075",
+    "unicorn-integrated-budget.patch": "570db5670f09e0d26a91cd32dc337db7144b1bfc080b9466dff1646df6c67f31",
+    "unicorn-mapping-cache.patch": "3e96b9dc3464c985130df34b409c3c0809500561c0a6601f510a96cc562e7410",
+    "unicorn-api-ram.patch": "f94b1d9835e2d3a281caff1376a13e8f69ae13e362754e2079744be293f8dd8c"
   },
   "debug": false,
-  "cmake_c_flags": "-O3 -g -DNDEBUG -flto",
+  "cmake_c_flags": "-O3 -g -DNDEBUG -flto -DOU_TCI_INTEGRATED_BUDGET=1 -DOU_MAPPING_CACHE=1",
+  "integrated_budget": true,
+  "mapping_cache": true,
+  "fast_ram_api": true,
   "link_flags": [
     "-O3",
     "-flto",
+    "-ffp-contract=off",
     "ASSERTIONS=0",
     "STACK_OVERFLOW_CHECK=0"
   ],
-  "host_source_sha256": "c7df1db469ad6621e6fff730b70a2d61f3f0c44987d5f34fc4d0b6b8589cf85d",
+  "host_source_sha256": "3d5f9e255b0a5b53e4b3c3018ee1abc963e7a96a41d33db87bc9449b73a223e1",
+  "variant_source_sha256": "63af757c602d15f71550c3c028d0b124089a6af62d650d96629eb8b9e1e41889",
+  "strings_source_sha256": "d359a00ef0864a4fe0f2a3755bc2eedf026b52db970b0b82a95638e9784206ba",
+  "heap_source_sha256": "bda6434ff7caa445f5c5abbda520c5d88b122d11ce6aa4158a43057ea6a075ce",
+  "gfx_source_sha256": "0406d70c162854896c73c9111234ebbafb23e1c7565e760547ac22bb46df352a",
+  "gc_source_sha256": "325cf2497563e3a783949372064ba294d4faf6029d657ef4750929f2d88e1a93",
   "hot_source_sha256": "76a52bc5619cb619e970ff2ebb6455523b26bb519a7a593824a67bdef3635ef7",
   "decompression_source_sha256": "4532f83dc62b03c7ac58ec0f6b266b07cf9f99a3d0b7e6f789a92b08b7e42657",
   "zlib_port": "Emscripten USE_ZLIB=1",
-  "bundle_sha256": "3dc2b6c262bde385c206f3bb05c774401250c07ecb85077f5ad1dfb792a03584"
+  "bundle_sha256": "577f0b929497cc41632f36083d76bba056fd4aa2fac45116eae719c056204702"
 }

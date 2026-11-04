@@ -1,0 +1,19 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
+import {ArmRuntime} from '../runtime/runtime.mjs';
+const require=createRequire(import.meta.url),create=require(process.env.OU_EMULATOR_BUNDLE||'../build/unicorn-arm.js'),uc=await create({print:()=>{},printErr:()=>{}}),r=new ArmRuntime(uc,fs.readFileSync(new URL('../../analysis/game-apk/lib/armeabi-v7a/libOrderUp.so',import.meta.url))),v=JSON.parse(fs.readFileSync(new URL('../../analysis/gc-bank-native-vectors.json',import.meta.url))),calls=[];
+try{r.nativeHot.setScriptMarkInlining?.(false);
+ assert(uc._ou_hot_native_bank_bind,'Requires bank traversal ports');r.map(0x700000,0x10000);const put=(p,...v)=>v.forEach((n,i)=>r.u32(p+i*4,n));const free=object=>{put(object,0xdeadbeef);for(let i=0;i<5;i++)if(object===0x700200+i*0x100)put(0x701800+i*4,0);};
+ for(const[index,kind]of ['destructor','delete','free'].entries()){const address=0x704100+index*0x100,trap=r.trap('test:'+kind);r.function('test:'+kind,()=>{const a=r.arg(0),b=r.arg(1),c=r.arg(2);if(kind==='destructor'){calls.push({kind,object:a});put(a+0x10,0x1234);}else if(kind==='delete'){calls.push({kind,object:a});free(a);}else{calls.push({kind,manager:b,object:c});free(c);r.write(a,new Uint8Array(12));}return 0;});put(address,0xe51ff004,trap);}
+ r.replaceFunction('_ZN3XPL12HBMemManager9GetHandleEPKv',()=>0x702000);
+ const diff=before=>{const after=r.read(0x700000,0x4000),changes=[];for(let i=0;i<after.length;i++)if(before[i]!==after[i])changes.push({offset:i,value:after[i]});return changes;};
+ for(const enabled of [false,true]){r.renderHot.setEnabled(enabled);
+  for(const c of v.banks){r.write(0x700000,new Uint8Array(0x4000));put(0x703100,0x704100,0,0x704200);put(0x703004,0x704300);put(0x7021c8,0x703000);if(c.kind==='string')put(0x700004,0x701000,5);else put(0x700000,0x701000,5,0x702000);
+   [[0,1],[],[2,3],[],[4]].forEach((indices,b)=>{put(0x701000+b*4,indices.length?0x701800+indices[0]*4:0);indices.forEach((i,j)=>{const o=0x700200+i*0x100;put(0x701800+i*4,o);put(o,0x703100);put(o+4,c.seed&(1<<i)?0:2);put(o+0x18,(c.seed+i)%3===0?1:0);put(o+0x14,j+1<indices.length?0x701800+indices[j+1]*4:0);});});
+   const before=r.read(0x700000,0x4000);calls.length=0;const result=await r.call(c.kind==='string'?'_ZN3CVM10StringBank5FlushEv':'_ZN3CVM9IdentBank5FlushEv',[0x700000]);assert.equal(result,c.result,JSON.stringify({enabled,...c}));assert.deepEqual(diff(before),c.changes,JSON.stringify({enabled,...c}));assert.deepEqual(calls,c.delegates,JSON.stringify({enabled,...c}));assert.equal(r.nativeHot.report().gc_active_frames,0);assert.equal(r.reg(4),0);assert.equal(r.reg(13),(r.main.stack-0x100)&~7);
+  }
+  for(const c of v.sweeps){r.write(0x700000,new Uint8Array(0x4000));put(0x700100,0xaaaaaaaa);put(0x700208,0x701000);put(0x700214,c.flags);put(0x702000,0x700200);put(0x702004,0x700300);put(0x702008,0x700400);put(0x702010,0x700500);const head=c.flags&0x200?0x25c:c.flags&0x180?0x254:0x250;put(0x701000+head,0x702000);if(c.neighbors){put(0x70020c,0x702004,0x702008);put(0x700310,0x702000);put(0x70040c,0x702000);}if(!(c.flags&0x200))put(0x70125c,0x702010);const before=r.read(0x700000,0x4000);await r.call('_ZN3CVM4Item12SweepGarbageEv',[0x700100,0x700200]);assert.deepEqual(diff(before),c.changes,JSON.stringify({enabled,...c}));assert.equal(r.reg(4),0);assert.equal(r.reg(13),(r.main.stack-0x100)&~7);}
+ }
+ console.log(JSON.stringify({passed:true,original_arm_bank_cases:v.banks.length,original_arm_sweep_cases:v.sweeps.length,checks_original_and_accelerated:(v.banks.length+v.sweeps.length)*2,destructor_and_free_order_preserved:true,pruning_and_counts_preserved:true,original_unmarked_sweep_fallback:true,stack_and_registers_preserved:true,active_continuation_frames:r.nativeHot.report().gc_active_frames},null,2));
+}finally{r.close();}

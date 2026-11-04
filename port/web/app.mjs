@@ -26,7 +26,7 @@ function updateLoading(){
  }else{
   loadingProgress.removeAttribute('value');loadingAmount.textContent='Preparing…';
   loadingTitle.textContent=startup.phase==='menu'?'Opening the game…':'Preparing the game…';
-  loadingDetail.textContent=document.hidden?'Return to this tab to finish loading.':'Startup can take 1–2 minutes. Keep this tab open.';
+  loadingDetail.textContent=document.hidden?'Return to this tab to finish loading.':'Starting the game. Keep this tab open.';
  }
 }
 function stopLoading(){clearInterval(loadingTimer);loadingTimer=null;loadingPanel.hidden=true;}

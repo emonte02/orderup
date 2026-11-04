@@ -28,6 +28,7 @@ try{
  page.on('pageerror',error=>errors.push(String(error)));
  page.on('request',req=>requests.push({url:req.url(),method:req.method()}));
  page.on('response',res=>{if(res.status()>=400)badResponses.push({url:res.url(),status:res.status()});});
+ const resourceBase=new URL('.',url).href;
  await page.goto(url,{waitUntil:'domcontentloaded'});
  assert.equal(await page.locator('input[type="file"]').count(),0,'The hosted game must never request local files');
  await page.locator('#start').waitFor({state:'visible'});
@@ -48,10 +49,11 @@ try{
  assert.deepEqual(errors,[]);assert.deepEqual(badResponses,[]);
  assert(requests.every(req=>req.method==='GET'),'Game files must not be uploaded');
  for(const file of gamePaths)assert(requests.some(req=>new URL(req.url).pathname===new URL(url).pathname+file.slice(1)),'Missing automatically downloaded game file: '+file);
- assert(requests.every(req=>req.url.startsWith(url)),'All player resources must work under the project path');
+ assert(requests.every(req=>req.url.startsWith(resourceBase)),'All player resources must work under the project path');
  fs.mkdirSync(path.join(root,'analysis'),{recursive:true});
  const stem=process.env.OU_PAGES_URL?'pages-live':'pages-local';
  await page.screenshot({path:path.join(root,'analysis',stem+'.png')});
- Object.assign(report,{url,automatic_downloads:download,no_local_files_required:true,fresh_browser_boot:true,fullscreen:true,mouse_drag:true,no_uploads:true,page_errors:errors,network_errors:badResponses});
+ const buildResponse=await page.request.get(new URL('build.json',resourceBase).href);assert.equal(buildResponse.ok(),true);const build=await buildResponse.json();const scriptRequests=requests.filter(req=>{const p=new URL(req.url).pathname;return p.endsWith('.mjs')||p.endsWith('/unicorn.js');});assert(scriptRequests.length>10);assert(scriptRequests.every(req=>new URL(req.url).searchParams.get('v')===build.version),'Every module and the engine must bypass an older cached build');
+ Object.assign(report,{url,build,all_player_modules_versioned:true,automatic_downloads:download,no_local_files_required:true,fresh_browser_boot:true,fullscreen:true,mouse_drag:true,no_uploads:true,page_errors:errors,network_errors:badResponses});
  fs.writeFileSync(path.join(root,'analysis',stem+'.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report,null,2));
 }finally{await browser?.close();if(server)await new Promise(resolve=>server.close(resolve));}

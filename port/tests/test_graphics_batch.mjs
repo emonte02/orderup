@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {ArmRuntime} from '../runtime/runtime.mjs';
-const require=createRequire(import.meta.url),createCPU=require('../build/unicorn-arm.js'),elf=fs.readFileSync(new URL('../../analysis/game-apk/lib/armeabi-v7a/libOrderUp.so',import.meta.url));
+const require=createRequire(import.meta.url),createCPU=require(process.env.OU_EMULATOR_BUNDLE||'../build/unicorn-arm.js'),elf=fs.readFileSync(new URL('../../analysis/game-apk/lib/armeabi-v7a/libOrderUp.so',import.meta.url));
 async function run(enabled){
  const events=[],graphics={supportsCommandBatch:true,call(name,r){const argc=name==='glVertexAttribPointer'?6:name==='glUniformMatrix4fv'?4:name==='glUniform4fv'?3:1,args=Array.from({length:argc},(_,i)=>r.arg(i)),data=name==='glUniform4fv'?Array.from(new Float32Array(r.read(args[2],16).buffer)):name==='glUniformMatrix4fv'?Array.from(new Float32Array(r.read(args[3],args[1]*64).buffer)):null;events.push({name,args,data});return 0;}};
  const uc=await createCPU({print:()=>{},printErr:()=>{}}),r=new ArmRuntime(uc,elf,{graphics,batchGraphics:enabled});
@@ -18,4 +18,4 @@ async function run(enabled){
  }finally{r.close();}
 }
 const baseline=await run(false),batched=await run(true);assert.deepEqual(batched.events.slice(0,baseline.events.length),baseline.events);assert(batched.report.original_void_calls>=4);assert(batched.report.flushes>=3);
-const report={uniform_snapshot_survives_native_mutation:true,flush_precedes_synchronous_host_call:true,six_argument_stack_abi:true,original_56_bone_matrix_upload:true,thumb_interworking:true,live_batch_toggle:true,baseline_equivalent:true,graphics_batch:batched.report};fs.writeFileSync(new URL('../../analysis/graphics-batch-tests.json',import.meta.url),JSON.stringify(report,null,2)+'\n');console.log(report);
+const report={uniform_snapshot_survives_native_mutation:true,flush_precedes_synchronous_host_call:true,six_argument_stack_abi:true,original_56_bone_matrix_upload:true,thumb_interworking:true,live_batch_toggle:true,baseline_equivalent:true,graphics_batch:batched.report};fs.writeFileSync(new URL('../../analysis/'+(process.env.OU_GRAPHICS_REPORT||'graphics-batch-tests.json'),import.meta.url),JSON.stringify(report,null,2)+'\n');console.log(report);
