@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-game-files="server">
+<html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Order Up!! To Go</title>
@@ -10,7 +10,7 @@
 .viewport-controls{position:fixed;bottom:max(12px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:3}.viewport-controls button{display:flex;align-items:center;gap:8px;padding:9px 13px;background:#202724dc;border:1px solid #69705c;color:#f4f0df;font-size:13px;box-shadow:0 2px 12px #0004}.viewport-controls svg{width:18px;height:18px}.playing .viewport-controls{opacity:.55;transition:opacity .15s}.playing .viewport-controls:hover,.playing .viewport-controls:focus-within{opacity:1}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}#status.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100vw - 32px);height:auto;padding:12px 18px;margin:0;clip:auto;white-space:normal;overflow:visible;background:#202724ee;border-radius:8px;z-index:4;color:#f4f0df;text-align:center}
 .activity-indicator{position:absolute;top:12px;right:12px;display:flex;align-items:center;gap:10px;padding:10px 14px;background:#151918ee;border-radius:8px;color:#f4f0df;font-size:14px;pointer-events:none}.loading-spinner{width:16px;height:16px;border:2px solid #454c40;border-top-color:#e7b556;border-radius:50%;animation:loading-turn 1s linear infinite}
 dialog{color:#f4f0df;background:#202724;border:1px solid #526052;border-radius:12px;padding:24px;max-width:min(620px,85vw);max-height:80vh}dialog::backdrop{background:#000a}dialog h2{margin:0 0 16px}#notice-body{white-space:pre-line;line-height:1.5}#notice-body ol{padding-left:22px}#notice-body li{margin:12px 0}#notice-body li p{margin:4px 0;font-size:14px}#notice-close{margin-top:18px}@keyframes loading-turn{to{transform:rotate(360deg)}}@keyframes loading-sweep{to{background-position:-200% 0}}@media(prefers-reduced-motion:reduce){.loading-spinner,.loading-meter progress:indeterminate{animation:none}.playing .viewport-controls,.loading-meter progress::-webkit-progress-value{transition:none}}@media(max-height:420px){.loading-card h1{margin-bottom:14px}.loading-meter{margin-top:14px}.loading-card .controls-hint{display:none}}
-.loading-panel{overflow-y:auto}.loading-card{margin:auto}.file-list{font-size:12px;overflow-wrap:anywhere}.remember{display:block;margin-top:18px;font-size:13px}.remember input{vertical-align:middle;accent-color:#e7b556}#file-message{color:#f2ca87;font-size:14px}#file-cache-note:empty{display:none}
+.loading-panel{overflow-y:auto}.loading-card{margin:auto}
 </style>
 <main>
  <p id="status" class="sr-only" role="status">Loading game files…</p>
@@ -21,14 +21,6 @@ dialog{color:#f4f0df;background:#202724;border:1px solid #526052;border-radius:1
     <h1>Order Up!! To Go</h1>
     <h2 id="loading-title">Loading game files…</h2>
     <p id="loading-detail">Getting your game ready.</p>
-    <div id="file-picker" hidden>
-     <p class="file-list">Order Up!! To Go v1.65 APK<br>main.13.com.svsgames.orderup.obb<br>patch.13.com.svsgames.orderup.obb</p>
-     <input id="game-files" type="file" accept=".apk,.obb" multiple hidden aria-label="Game APK and OBB files">
-     <button id="choose-files" type="button">Choose game files</button>
-     <label class="remember"><input id="remember-files" type="checkbox" checked> Remember game files in this browser</label>
-     <p id="file-message" role="status"></p>
-    </div>
-    <p id="file-cache-note" role="status"></p>
     <div id="loading-meter" class="loading-meter">
      <progress id="loading-progress" max="100" value="0" aria-labelledby="loading-title"></progress>
      <div class="loading-meta"><span id="loading-amount">0%</span><span id="loading-elapsed">0 seconds elapsed</span></div>

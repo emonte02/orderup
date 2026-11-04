@@ -23,8 +23,15 @@ jobs:
           node-version: '22'
       - name: Check mouse controls
         run: node port/tests/test_mouse.mjs
-      - name: Check archive reader
-        run: node port/tests/test_game_files.mjs
+      - name: Check automatic downloads
+        run: node port/tests/test_downloads.mjs
+      - name: Download game runtime data
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh release download game-data-1.65 --pattern orderup-game-data-1.65.zip --dir _runtime
+      - name: Verify and unpack game runtime data
+        run: python3 tools/package_game_data.py --extract _runtime/orderup-game-data-1.65.zip
       - name: Package player
         run: node tools/package_pages.mjs
       - uses: actions/configure-pages@v5

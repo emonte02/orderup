@@ -1,0 +1,52 @@
+{
+  "version": "1.65",
+  "release_tag": "game-data-1.65",
+  "archive": "orderup-game-data-1.65.zip",
+  "files": [
+    {
+      "path": "game/libOrderUp.so",
+      "source": "originals/orderup-1.65.apk",
+      "size": 4464652,
+      "sha256": "9e3f2fe8c829b7bec803cf42140e39d3434c8726799395932eb1799c9aed0228",
+      "member": "lib/armeabi-v7a/libOrderUp.so"
+    },
+    {
+      "path": "game/orderup.apk",
+      "source": "originals/orderup-1.65.apk",
+      "size": 11349359,
+      "sha256": "34bf7e764b1affcb4b3765275ad50dc7fd2b8934418284cf9d49c7bfe2abc593"
+    },
+    {
+      "path": "game/main.13.com.svsgames.orderup.obb",
+      "source": "originals/main.13.com.svsgames.orderup.obb",
+      "size": 86803648,
+      "sha256": "9f863b6388af72a7629f60d6a4692491bf0d19a6831aca7cad5a06e5f234f9c6"
+    },
+    {
+      "path": "game/patch.13.com.svsgames.orderup.obb",
+      "source": "originals/patch.13.com.svsgames.orderup.obb",
+      "size": 79173735,
+      "sha256": "6a322715c4d148842cdae39bbce3766c398da85a8a2113207475fa667efd626d"
+    },
+    {
+      "path": "save/chefdata.wad",
+      "source": "originals/orderup-1.65.apk",
+      "size": 4856192,
+      "sha256": "1793426c7a363f59e144f943fcc1328e2c8536e84c107e3fe37ec9e8a3e3a932",
+      "member": "assets/chefdata.png"
+    },
+    {
+      "path": "save/chefmisc.wad",
+      "source": "originals/orderup-1.65.apk",
+      "size": 34527,
+      "sha256": "5d2d5e4d619570e4eadb396b8f342637a67af032bd1a47ec4fd80214a57610ec",
+      "member": "assets/chefmisc.png"
+    },
+    {
+      "path": "game/ui.json",
+      "source": "analysis/game-platform-ui.json",
+      "size": 3635,
+      "sha256": "1eceabdac3d013eaf64f69073894bebd2b6f21059287bdf9a50242d5793b6f67"
+    }
+  ]
+}

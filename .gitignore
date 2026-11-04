@@ -13,6 +13,7 @@
 /tools/*
 !/tools/serve.mjs
 !/tools/package_pages.mjs
+!/tools/package_game_data.py
 !/tools/build_emulator.py
 !/tools/patches/
 !/tools/browser/
@@ -39,6 +40,7 @@
 /assets/
 /analysis/
 /_site/
+/_runtime/
 **/node_modules/
 **/__pycache__/
 *.pyc

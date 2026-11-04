@@ -1,4 +1,4 @@
-import {chooseGameFiles} from './game-files.mjs';
+import {gamePaths,loadHostedGameFiles} from './downloads.mjs';
 import {ArmRuntime} from './runtime/runtime.mjs';
 import {openSaves} from './runtime/persistence.mjs';
 import {GameAudio} from './runtime/audio.mjs';
@@ -16,7 +16,6 @@ function updateLoading(){
  const startup=state.startup;
  if(state.frames>0){startup.ready_ms=performance.now()-(startup.play_requested??startup.started);startup.page_ready_ms=performance.now()-startup.started;stopLoading();document.body.classList.add('playing');say('Click and drag to play.');return;}
  const seconds=Math.floor((performance.now()-(startup.play_requested??startup.started))/1000);loadingElapsed.textContent=seconds+' seconds elapsed';
- if(startup.phase==='select')return;
  if(startup.phase==='files'){
   loadingTitle.textContent='Loading game files…';
   loadingDetail.textContent=startup.bytes_total?(startup.bytes_loaded/1048576).toFixed(1)+' of '+(startup.bytes_total/1048576).toFixed(1)+' MB loaded.':'Getting your game ready.';
@@ -35,21 +34,9 @@ function loadEmulator(){
  if(typeof globalThis.MUnicorn==='function')return Promise.resolve();
  return new Promise((resolve,reject)=>{const script=document.createElement('script');script.src=new URL('./unicorn.js',import.meta.url).href;script.onload=()=>typeof globalThis.MUnicorn==='function'?resolve():reject(Error('Game engine did not load'));script.onerror=()=>reject(Error('Could not load game engine'));document.head.append(script);});
 }
-const paths=['/game/libOrderUp.so','/game/orderup.apk','/game/main.13.com.svsgames.orderup.obb','/game/patch.13.com.svsgames.orderup.obb','/save/chefdata.wad','/save/chefmisc.wad'];
-async function loadGameFiles(){
- if(document.documentElement.dataset.gameFiles==='import'){state.startup.phase='select';return chooseGameFiles(({loaded,total,files})=>{state.startup.bytes_loaded=loaded;state.startup.bytes_total=total;state.startup.files_loaded=files;});}
- const responses=await Promise.all(paths.map(async path=>{const response=await fetch(path);if(!response.ok)throw Error('Missing file '+path);return response;}));
- const lengths=responses.map(response=>Number(response.headers.get('Content-Length'))||0);
- state.startup.bytes_total=lengths.every(length=>length>0)?lengths.reduce((a,b)=>a+b,0):0;updateLoading();
- return Promise.all(responses.map(async(response,index)=>{
-  let bytes;
-  if(response.body&&lengths[index]){
-   bytes=new Uint8Array(lengths[index]);const reader=response.body.getReader();let offset=0;
-   for(;;){const {value,done}=await reader.read();if(done)break;if(offset+value.length>bytes.length)throw Error('Game file exceeded its declared size');bytes.set(value,offset);offset+=value.length;state.startup.bytes_loaded+=value.length;}
-   if(offset!==bytes.length)throw Error('Game file download was incomplete');
-  }else{bytes=new Uint8Array(await response.arrayBuffer());state.startup.bytes_loaded+=bytes.length;}
-  state.startup.files_loaded++;updateLoading();return bytes;
- }));
+const paths=gamePaths;
+function loadGameFiles(){
+ return loadHostedGameFiles({onProgress:({loaded,total,files})=>{state.startup.bytes_loaded=loaded;state.startup.bytes_total=total;state.startup.files_loaded=files;updateLoading();}});
 }
 async function preload(){
  try{const [data,emulator]=await Promise.all([loadGameFiles(),loadEmulator().then(()=>globalThis.MUnicorn())]);state.startup.assets_ready=true;if(!state.startRequested){state.state='ready';loadingPhase('ready');say('Game files loaded. Start game when you are ready.');}return{data,emulator};}
@@ -62,7 +49,7 @@ fullscreenButton.addEventListener('click',async()=>{try{if(document.fullscreenEl
 document.addEventListener('fullscreenchange',updateFullscreen);
 const activityIndicator=document.querySelector('#activity-indicator');
 const notice=document.querySelector('#notice'),noticeTitle=document.querySelector('#notice-title'),noticeBody=document.querySelector('#notice-body');let resumeAfterNotice=false;
-const uiData=(document.documentElement.dataset.gameFiles==='import'?Promise.resolve({ok:false}):fetch('./game/ui.json')).then(r=>r.ok?r.json():{achievements:[]}).catch(()=>({achievements:[]}));
+const uiData=fetch(new URL('./game/ui.json',import.meta.url)).then(r=>r.ok?r.json():{achievements:[]}).catch(()=>({achievements:[]}));
 async function showNotice(detail){
  const data=await uiData;
  if(detail.kind==='achievement'){const item=data.achievements.find(x=>x.id===detail.id);say('Achievement unlocked: '+(item?.title||'Achievement'));status.classList.add('toast');clearTimeout(toastTimer);toastTimer=setTimeout(()=>status.classList.remove('toast'),4000);return;}

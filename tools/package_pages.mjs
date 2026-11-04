@@ -1,21 +1,34 @@
-/** Package only the browser port. Original game files never enter the website. */
+/** Package the browser port and verified runtime data for one-click play. */
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const out=path.join(root,'_site');
+const gameData=JSON.parse(fs.readFileSync(path.join(root,'port/game-data.json')));
+// Verify required payloads before replacing the last working website.
+for(const spec of gameData.files){
+ const source=path.join(root,'_runtime/data',spec.path);
+ if(!fs.existsSync(source))throw Error('Missing runtime data. Download and extract the game-data release first (see README): '+spec.path);
+ const bytes=fs.readFileSync(source);
+ if(bytes.length!==spec.size||crypto.createHash('sha256').update(bytes).digest('hex')!==spec.sha256)throw Error('Runtime data failed verification: '+spec.path);
+}
 const record=JSON.parse(fs.readFileSync(path.join(root,'port/build/emulator-build.json')));
 const bundle=fs.readFileSync(path.join(root,'port/build/unicorn-arm.js'));
 if(crypto.createHash('sha256').update(bundle).digest('hex')!==record.bundle_sha256)throw Error('Emulator bundle differs from its build record. Rebuild before publishing.');
 fs.rmSync(out,{recursive:true,force:true});fs.mkdirSync(out,{recursive:true});
 const copy=(source,target)=>fs.copyFileSync(path.join(root,source),path.join(out,target));
-for(const name of ['app.mjs','loop.mjs','mouse.mjs','game-files.mjs'])copy('port/web/'+name,name);
-const html=fs.readFileSync(path.join(root,'port/web/index.html'),'utf8').replace('data-game-files="server"','data-game-files="import"');
+for(const name of ['app.mjs','loop.mjs','mouse.mjs','downloads.mjs'])copy('port/web/'+name,name);
+const appVersion=crypto.createHash('sha256').update(fs.readFileSync(path.join(root,'port/web/app.mjs'))).digest('hex').slice(0,16);
+const html=fs.readFileSync(path.join(root,'port/web/index.html'),'utf8').replace('src="./app.mjs"','src="./app.mjs?v='+appVersion+'"');
 fs.writeFileSync(path.join(out,'index.html'),html);
 fs.mkdirSync(path.join(out,'runtime'));
 for(const name of fs.readdirSync(path.join(root,'port/runtime')).filter(name=>name.endsWith('.mjs')))copy('port/runtime/'+name,'runtime/'+name);
 copy('port/build/unicorn-arm.js','unicorn.js');copy('port/build/emulator-build.json','emulator-build.json');
 fs.cpSync(path.join(root,'port/licenses'),path.join(out,'licenses'),{recursive:true});
 copy('port/THIRD_PARTY.md','THIRD_PARTY.md');fs.writeFileSync(path.join(out,'.nojekyll'),'');
-console.log('Packaged the browser player in _site/ (no original game files).');
+for(const spec of gameData.files){
+ fs.mkdirSync(path.dirname(path.join(out,spec.path)),{recursive:true});copy('_runtime/data/'+spec.path,spec.path);
+}
+fs.writeFileSync(path.join(out,'game/manifest.json'),JSON.stringify({version:gameData.version,files:gameData.files.map(({path,size,sha256})=>({path,size,sha256}))},null,2)+'\n');
+console.log('Packaged the player and '+gameData.files.length+' runtime files in _site/. No file selection required.');

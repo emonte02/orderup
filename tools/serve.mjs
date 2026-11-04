@@ -6,7 +6,8 @@ const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 export function createGameServer(){
  const routes=new Map([
   ['/', ['port/web/index.html','text/html']],['/app.mjs',['port/web/app.mjs','text/javascript']],['/mouse.mjs',['port/web/mouse.mjs','text/javascript']],['/loop.mjs',['port/web/loop.mjs','text/javascript']],
-  ['/game-files.mjs',['port/web/game-files.mjs','text/javascript']],
+  ['/downloads.mjs',['port/web/downloads.mjs','text/javascript']],
+  ['/game/manifest.json',['port/game-data.json','application/json']],
   ['/unicorn.js',['port/build/unicorn-arm.js','text/javascript']],['/game/libOrderUp.so',['analysis/game-apk/lib/armeabi-v7a/libOrderUp.so','application/octet-stream']],
   ['/save/chefdata.wad',['analysis/game-apk/assets/chefdata.png','application/octet-stream']],['/save/chefmisc.wad',['analysis/game-apk/assets/chefmisc.png','application/octet-stream']],
   ['/game/ui.json',['analysis/game-platform-ui.json','application/json']],
