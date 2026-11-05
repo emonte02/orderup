@@ -12,7 +12,6 @@ GitHub cannot run interactive games inside a repository README. The **Play** lin
 
 - **Click and drag** to use the original touch controls.
 - **Right-click or Escape** to go back or pause.
-- **Full screen** expands the game to the display.
 - Choose **Continue** in the game to resume saved progress.
 
 Saves belong to the browser and site address. GitHub Pages and the local Mac launcher have separate saves. Clearing site data removes saved progress. See [PLAYING.md](PLAYING.md).

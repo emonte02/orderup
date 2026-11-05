@@ -66,6 +66,10 @@ The diner end-of-day summary awarded 44 silver (11→55), followed by the origin
 
 ## Running and reproducing
 
+The browser shows a single **Skip Tutorial** button only while the original Burger Face tutorial is active. `web/tutorial.mjs` queues a click for the frame loop and remembers a successful skip in the browser's `orderup-skip-tutorial` localStorage key. There is no tutorial toggle or preference panel. `runtime/tutorial.mjs` recognizes the original tutorial FSM and uses native state transitions, temporary-assistant setup/cleanup, and the original end-of-day/save path. Tutorial-owned native timers are cancelled before scene teardown so delayed dialogue cannot notify a destroyed FSM. No prepared save or patched game asset is used. The remembered choice is local to the browser/origin, just like the existing saves.
+
+`node port/tests/test_tutorial.mjs` checks visibility, a single skip per click, input release, remembered choices, and serialized click handling. `node port/tests/test_tutorial_browser.mjs` exercises the button's label and visibility, fresh-player skipping, original encrypted-save reload, and automatic skipping on the next new game. It requires the same local assets, Chrome, Playwright, and OCR helper as the other gameplay tests. Reports and screenshots go to `analysis/`.
+
 From the project root, `./port/play.sh` serves the local game at http://127.0.0.1:8147. It starts automatically after loading and preparation. Keep the same origin/port to retain browser saves.
 
 Useful checks:
@@ -102,7 +106,7 @@ The `game-data-1.65` release supplies the exact seven runtime-data files in `gam
 
 `node tools/package_pages.mjs` assembles the browser code, emulator, notices, and verified runtime data into `_site/`. The Pages workflow retrieves the release before packaging. `web/downloads.mjs` fetches and verifies each game file automatically using project-relative URLs. Download progress measures decoded bytes from the manifest, so HTTP gzip does not break progress or size checks. There is no file picker. Every packaged module and the engine share a content-derived version query, so returning players receive one coherent build instead of a mixture of old cached code. `build.json` identifies the version and engine hash. Existing browser saves keep their original format and database.
 
-`tests/test_downloads.mjs` checks automatic downloads, project-relative paths, gzip handling, integrity checks, and missing/truncated/oversized file failures with small synthetic payloads. `tests/test_pages_browser.mjs` starts the complete player in a fresh browser without local game files and verifies engine boot, audio, full screen, mouse input, and automatic data loading. Set `OU_PAGES_URL` to run the same test against the published site.
+`tests/test_downloads.mjs` checks automatic downloads, project-relative paths, gzip handling, integrity checks, and missing/truncated/oversized file failures with small synthetic payloads. `tests/test_pages_browser.mjs` starts the complete player in a fresh browser without local game files and verifies engine boot, audio, mouse input, automatic data loading, and the absence of a Full screen button. Set `OU_PAGES_URL` to run the same test against the published site.
 
 ## Performance C ports
 
