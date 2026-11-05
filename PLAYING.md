@@ -4,7 +4,7 @@
 
 Use desktop Chrome. Open the link; the game starts automatically. All game files download automatically; you do not need to provide an APK or OBB. The first download is about 187 MB. Game files are cached on this device for later visits; only changed, missing, or damaged files download again. The progress bar covers loading and engine preparation, reaching 100% when the game opens. Sound starts with your first tap or keypress if autoplay is blocked.
 
-Keep the tab selected during startup. The optimized build reaches the menu in about 10–11 seconds on the development Mac once the game files are available. First-time downloading adds time according to your connection. The game fills the browser window; **Full Screen** hides browser controls. On the world map, the button appears in the lower-right corner using the original Back button's artwork and font. Escape exits full screen without leaving the map.
+Keep the tab selected during startup. The optimized build reaches the menu in about 10–11 seconds on the development Mac once the game files are available. First-time downloading adds time according to your connection. The game fills the browser window; **Full Screen** hides browser controls. On the world map, the button appears in the lower-right corner using the original Back button's artwork and font. Fullscreen controls appear only on menus, so they never cover the kitchen controls. Escape exits full screen during gameplay.
 
 Click and drag with the left mouse button. Right-click or press Escape to go back or pause. The original tutorial teaches cooking gestures. Use a quick mouse flick for the Ravioli cutter’s arrow prompt. To plate food from an oven or assistant icon, select the ready food first, then click the plate button.
 

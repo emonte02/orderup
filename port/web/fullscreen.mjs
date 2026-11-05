@@ -1,10 +1,11 @@
 /** Browser activation for the button drawn by the native game menu. */
 export function bindFullscreen(canvas,button,label,{onUnavailable=()=>{},documentTarget=document,windowTarget=window}={}){
- let bounds=null,pointer=null,inside=false,focused=false,exitTime=-Infinity;
+ let bounds=null,menuVisible=false,pointer=null,inside=false,focused=false,exitTime=-Infinity;
  const listeners=[],on=(target,event,fn,options)=>{target.addEventListener(event,fn,options);listeners.push(()=>target.removeEventListener(event,fn,options));};
  const active=()=>!!documentTarget.fullscreenElement;
  const supported=()=>!!documentTarget.fullscreenEnabled;
- const update=()=>{button.hidden=!supported();button.setAttribute('aria-pressed',String(active()));button.setAttribute('aria-label',active()?'Exit full screen':'Enter full screen');label.textContent=active()?'Exit Full Screen':'Full Screen';};
+ const updateVisibility=()=>{const hidden=!supported()||!menuVisible&&!bounds;if(button.hidden!==hidden)button.hidden=hidden;};
+ const update=()=>{updateVisibility();button.setAttribute('aria-pressed',String(active()));button.setAttribute('aria-label',active()?'Exit full screen':'Enter full screen');label.textContent=active()?'Exit Full Screen':'Full Screen';};
  const toggle=()=>{try{const result=active()?documentTarget.exitFullscreen():documentTarget.documentElement.requestFullscreen();Promise.resolve(result).catch(onUnavailable);}catch(error){onUnavailable(error);}};
  const hit=event=>{
   if(!bounds)return false;
@@ -48,7 +49,8 @@ export function bindFullscreen(canvas,button,label,{onUnavailable=()=>{},documen
   enabled:supported,
   label:()=>active()?'Exit Full Screen':'Full Screen',
   pressed:()=>pointer!==null&&inside||focused,
-  setBounds(value){bounds=value;button.classList.toggle('native-fullscreen',!!bounds);if(!bounds){reset();canvas.style.cursor='';}},
+  setBounds(value){bounds=value;button.classList.toggle('native-fullscreen',!!bounds);if(!bounds){reset();canvas.style.cursor='';}updateVisibility();},
+  setMenuVisible(value){menuVisible=!!value;updateVisibility();},
   get bounds(){return bounds;},
   close(){reset();listeners.forEach(remove=>remove());button.classList.remove('native-fullscreen');canvas.style.cursor='';},
  };

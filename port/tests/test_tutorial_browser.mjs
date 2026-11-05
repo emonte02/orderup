@@ -34,7 +34,13 @@ try {
  page=await session.open('tutorial');
  assert.equal(await page.locator('#tutorial-overlay').isVisible(),false);
  assert.equal(await page.locator('#tutorial-preference').count(),0,'There is no tutorial toggle');
+ await page.click('#fullscreen');await page.waitForFunction(()=>!!document.fullscreenElement);
  await newGame();await page.locator('#skip-tutorial').waitFor({state:'visible',timeout:120000});
+ assert.equal(await page.locator('#fullscreen').isVisible(),false,'Fullscreen must not cover the kitchen controls');
+ assert.equal(await page.evaluate(()=>orderup.fullscreen.bounds),null);
+ assert.equal(await page.evaluate(()=>!!document.fullscreenElement),true,'Entering gameplay retains fullscreen');
+ await page.keyboard.press('Escape');await page.waitForFunction(()=>!document.fullscreenElement);
+ assert.equal(await page.locator('#fullscreen').isVisible(),false,'Exiting fullscreen must not show a gameplay overlay');
  assert.equal(await page.locator('#skip-tutorial').textContent(),'Skip Tutorial');
  await page.screenshot({path:'analysis/tutorial-overlay.png'});
  await page.click('#skip-tutorial');
@@ -62,5 +68,5 @@ try {
  assert.equal(await page.locator('#tutorial-preference').count(),0);
  console.log('The next new game skipped its tutorial using the remembered click, with no toggle.');
  await page.screenshot({path:'analysis/tutorial-skipped-map.png'});
- fs.writeFileSync('analysis/tutorial-browser-tests.json',JSON.stringify({button_only_during_tutorial:true,exact_button_label:'Skip Tutorial',no_toggle:true,one_click_skip:true,remembered_choice:true,stable_after_delayed_callbacks:true,encrypted_save_reload:true,next_game_auto_skip:true,save},null,2)+'\n');
+ fs.writeFileSync('analysis/tutorial-browser-tests.json',JSON.stringify({fullscreen_hidden_during_gameplay:true,gameplay_escape_exits_fullscreen:true,button_only_during_tutorial:true,exact_button_label:'Skip Tutorial',no_toggle:true,one_click_skip:true,remembered_choice:true,stable_after_delayed_callbacks:true,encrypted_save_reload:true,next_game_auto_skip:true,save},null,2)+'\n');
 } finally {if(page)await page.screenshot({path:'analysis/tutorial-test-final.png'});await session.close();}
