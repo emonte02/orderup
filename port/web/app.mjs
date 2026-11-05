@@ -5,6 +5,7 @@ import {GameAudio} from './runtime/audio.mjs';
 import {GameGraphics} from './runtime/graphics.mjs';
 import {startFrameLoop} from './loop.mjs';
 import {bindMouse} from './mouse.mjs';
+import {showCoinStore} from './store.mjs';
 const button=document.querySelector('#start'),status=document.querySelector('#status'),canvas=document.querySelector('canvas');
 const state=window.orderup={state:'loading',runtime:null,error:null,frames:0,timings:[],input:[],frameTimes:[],startRequested:false,startup:{started:performance.now(),phase:'files',files_loaded:0,bytes_loaded:0,bytes_total:0,phases:[]}};
 let toastTimer;
@@ -58,6 +59,7 @@ async function showNotice(detail){
   const list=document.createElement('ol');for(const item of (data.achievements.length?data.achievements:Array.from({length:30},(_,i)=>({id:i+13,title:'Achievement '+(i+1),description:''})))){const li=document.createElement('li'),title=document.createElement('strong'),description=document.createElement('p');title.textContent=(detail.unlocked.includes(item.id)?'✓ ':'○ ')+item.title;description.textContent=item.description;li.append(title,description);list.append(li);}noticeBody.append(list);
  }else noticeBody.textContent=detail.message||'';
  if(!notice.open){resumeAfterNotice=state.state==='running';notice.showModal();noticeTitle.tabIndex=-1;noticeTitle.focus({preventScroll:true});notice.scrollTop=0;await state.controller?.pause();}
+ if(detail.kind==='coin-store')await showCoinStore(state,notice,noticeBody,detail.silverOnly,failed);
 }
 document.querySelector('#notice-close').addEventListener('click',()=>notice.close());
 notice.addEventListener('close',()=>{if(resumeAfterNotice&&!document.hidden)state.controller?.resume();});

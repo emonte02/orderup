@@ -18,7 +18,7 @@ const bundle=fs.readFileSync(path.join(root,'port/build/unicorn-arm.js'));
 if(crypto.createHash('sha256').update(bundle).digest('hex')!==record.bundle_sha256)throw Error('Emulator bundle differs from its build record. Rebuild before publishing.');
 fs.rmSync(out,{recursive:true,force:true});fs.mkdirSync(out,{recursive:true});
 const copy=(source,target)=>fs.copyFileSync(path.join(root,source),path.join(out,target));
-const modules=[...['app.mjs','loop.mjs','mouse.mjs','downloads.mjs'].map(name=>({source:'port/web/'+name,target:name})),...fs.readdirSync(path.join(root,'port/runtime')).filter(name=>name.endsWith('.mjs')).sort().map(name=>({source:'port/runtime/'+name,target:'runtime/'+name}))];
+const modules=[...['app.mjs','loop.mjs','mouse.mjs','downloads.mjs','store.mjs'].map(name=>({source:'port/web/'+name,target:name})),...fs.readdirSync(path.join(root,'port/runtime')).filter(name=>name.endsWith('.mjs')).sort().map(name=>({source:'port/runtime/'+name,target:'runtime/'+name}))];
 const versionHash=crypto.createHash('sha256').update(bundle).update(fs.readFileSync(path.join(root,'port/web/index.html')));
 for(const item of modules)versionHash.update(item.target).update(fs.readFileSync(path.join(root,item.source)));
 const appVersion=versionHash.digest('hex').slice(0,16);

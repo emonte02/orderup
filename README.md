@@ -17,7 +17,7 @@ GitHub cannot run interactive games inside a repository README. The **Play** lin
 
 Saves belong to the browser and site address. GitHub Pages and the local Mac launcher have separate saves. Clearing site data removes saved progress. See [PLAYING.md](PLAYING.md).
 
-The optimized build reaches the menu in about **10–11 seconds** on the development M5 Max Mac once the game files are available. Measured restaurant kitchens average **38–49 fps**; performance checks include the tournament demonstration and its loading handoff. Original graphics, sound and game timing are retained. Results depend on the computer and browser; occasional asset-loading stalls remain. See the measured scene coverage in [the architecture notes](port/ARCHITECTURE.md). Retired purchases, ads, and leaderboards are unavailable.
+The optimized build reaches the menu in about **10–11 seconds** on the development M5 Max Mac once the game files are available. Measured restaurant kitchens average **38–49 fps**; performance checks include the tournament demonstration and its loading handoff. Original graphics, sound and game timing are retained. Results depend on the computer and browser; occasional asset-loading stalls remain. See the measured scene coverage in [the architecture notes](port/ARCHITECTURE.md). The coin store simulates gold-pack and double-silver purchases locally, with no payment processing. Retired ads, other purchases, and leaderboards are unavailable.
 
 ## What this port contains
 
