@@ -12,6 +12,17 @@ Ready to get back in the kitchen? Play directly in your browser—just open the 
 
 **[Play Order Up!! To Go online](https://emonte02.github.io/orderup/)**
 
+### Full-screen play on iPhone and iPad
+
+On iOS 26 or iPadOS 26 or later, add the game to your Home Screen for a full-screen experience without Safari's address bar or tabs:
+
+1. Open the play link above in **Safari**.
+2. Open Safari's **Share** menu (the square with an upward arrow) and choose **Add to Home Screen**. If an option is hidden, look under **More (...)** or **View More**.
+3. Keep **Open as Web App** turned on, then tap **Add**.
+4. Launch the game from its new icon on your Home Screen.
+
+Need help? See Apple's Home Screen instructions for [iPhone](https://support.apple.com/en-eg/guide/iphone/iphea86e5236/ios) or [iPad](https://support.apple.com/en-ie/guide/ipad/ipad8f1f7a29/ipados).
+
 ## Run locally
 
 You'll need Git, Node.js 22 or newer, Python 3, and curl installed. Open a terminal and run these commands to clone the repo, download the game files, and start the player:
