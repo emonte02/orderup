@@ -18,20 +18,24 @@ const record=JSON.parse(fs.readFileSync(path.join(root,'port/build/emulator-buil
 const bundle=fs.readFileSync(path.join(root,'port/build/unicorn-arm.js'));
 if(crypto.createHash('sha256').update(bundle).digest('hex')!==record.bundle_sha256)throw Error('Emulator bundle differs from its build record. Rebuild before publishing.');
 const artwork=loadingArt(fs.readFileSync(path.join(root,'_runtime/data/game/main.13.com.svsgames.orderup.obb')));
-const loadingCSS=fs.readFileSync(path.join(root,'port/web/loading.css'));
+const stylesheets = ['loading.css', 'dialogs.css'].map(name => ({
+  name, bytes: fs.readFileSync(path.join(root, 'port/web', name)),
+}));
 const appIcon=fs.readFileSync(path.join(root,'port/web/apple-touch-icon.png'));
 fs.rmSync(out,{recursive:true,force:true});fs.mkdirSync(out,{recursive:true});
 const copy=(source,target)=>fs.copyFileSync(path.join(root,source),path.join(out,target));
-const modules=[...['app.mjs','loop.mjs','mouse.mjs','downloads.mjs','store.mjs','tutorial.mjs','fullscreen.mjs'].map(name=>({source:'port/web/'+name,target:name})),...fs.readdirSync(path.join(root,'port/runtime')).filter(name=>name.endsWith('.mjs')).sort().map(name=>({source:'port/runtime/'+name,target:'runtime/'+name}))];
+const modules=[...['app.mjs','loop.mjs','mouse.mjs','downloads.mjs','store.mjs','dialogs.mjs','tutorial.mjs','fullscreen.mjs'].map(name=>({source:'port/web/'+name,target:name})),...fs.readdirSync(path.join(root,'port/runtime')).filter(name=>name.endsWith('.mjs')).sort().map(name=>({source:'port/runtime/'+name,target:'runtime/'+name}))];
 const versionHash=crypto.createHash('sha256').update(bundle).update(fs.readFileSync(path.join(root,'port/web/index.html')));
-versionHash.update(loadingCSS).update(appIcon);for(const [name,bytes]of artwork)versionHash.update(name).update(bytes);
+for (const {name, bytes} of stylesheets) versionHash.update(name).update(bytes);
+versionHash.update(appIcon);for(const [name,bytes]of artwork)versionHash.update(name).update(bytes);
 for(const item of modules)versionHash.update(item.target).update(fs.readFileSync(path.join(root,item.source)));
 const appVersion=versionHash.digest('hex').slice(0,16);
 const versionModule=text=>text.replace(/(['"])(\.{1,2}\/[^'"?#]+\.mjs)\1/g,(_match,quote,specifier)=>quote+specifier+'?v='+appVersion+quote).replace("new URL('./unicorn.js',import.meta.url)","new URL('./unicorn.js?v="+appVersion+"',import.meta.url)");
-const html=fs.readFileSync(path.join(root,'port/web/index.html'),'utf8').replace(/((?:src|href)="\.\/(?:app\.mjs|loading\.css|apple-touch-icon\.png|art\/[^"?]+\.png))"/g,'$1?v='+appVersion+'"');
+const html=fs.readFileSync(path.join(root,'port/web/index.html'),'utf8').replace(/((?:src|href)="\.\/(?:app\.mjs|(?:loading|dialogs)\.css|apple-touch-icon\.png|art\/[^"?]+\.png))"/g,'$1?v='+appVersion+'"');
 fs.writeFileSync(path.join(out,'index.html'),html);fs.mkdirSync(path.join(out,'runtime'));
 fs.writeFileSync(path.join(out,'apple-touch-icon.png'),appIcon);
-fs.writeFileSync(path.join(out,'loading.css'),loadingCSS);fs.mkdirSync(path.join(out,'art'));
+for (const {name, bytes} of stylesheets) fs.writeFileSync(path.join(out, name), bytes);
+fs.mkdirSync(path.join(out,'art'));
 for(const[name,bytes]of artwork)fs.writeFileSync(path.join(out,'art',name),bytes);
 for(const item of modules)fs.writeFileSync(path.join(out,item.target),versionModule(fs.readFileSync(path.join(root,item.source),'utf8')));
 fs.writeFileSync(path.join(out,'build.json'),JSON.stringify({version:appVersion,bundle_sha256:record.bundle_sha256},null,2)+'\n');

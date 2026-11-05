@@ -6,13 +6,14 @@ import {GameGraphics} from './runtime/graphics.mjs';
 import {startFrameLoop} from './loop.mjs';
 import {bindMouse} from './mouse.mjs';
 import {showCoinStore} from './store.mjs';
+import {createDialogIcons, renderAchievements, renderAchievementToast} from './dialogs.mjs';
 import {createTutorialSkipper} from './runtime/tutorial.mjs';
 import {createTutorialControls} from './tutorial.mjs';
 import {bindFullscreen} from './fullscreen.mjs';
 import {createNativeFullscreen} from './runtime/fullscreen.mjs';
 const button=document.querySelector('#start'),status=document.querySelector('#status'),canvas=document.querySelector('canvas');
 const state=window.orderup={state:'loading',runtime:null,error:null,frames:0,timings:[],input:[],frameTimes:[],startRequested:false,startup:{started:performance.now(),phase:'files',files_loaded:0,bytes_loaded:0,bytes_total:0,phases:[]}};
-let toastTimer,tutorialControls;
+let toastTimer,tutorialControls,dialogIcon;
 const say=text=>{status.textContent=text;};
 const loadingPanel=document.querySelector('#loading-panel'),loadingTitle=document.querySelector('#loading-title'),loadingDetail=document.querySelector('#loading-detail'),loadingElapsed=document.querySelector('#loading-elapsed'),loadingProgress=document.querySelector('#loading-progress'),loadingAmount=document.querySelector('#loading-amount');let loadingTimer=null;
 function loadingPhase(phase){state.startup.phase=phase;state.startup.phases.push({phase,elapsed_ms:performance.now()-state.startup.started});updateLoading();}
@@ -54,17 +55,49 @@ tiltSlider.addEventListener('input',()=>state.runtime?.motion.setTilt(Number(til
 document.querySelector('#shake').addEventListener('click',()=>state.runtime?.motion.shake());
 
 const activityIndicator=document.querySelector('#activity-indicator');
-const notice=document.querySelector('#notice'),noticeTitle=document.querySelector('#notice-title'),noticeBody=document.querySelector('#notice-body');let resumeAfterNotice=false;
+const notice = document.querySelector('#notice');
+const noticeTitle = document.querySelector('#notice-title');
+const noticeBody = document.querySelector('#notice-body');
+const noticeSummary = document.querySelector('#notice-summary');
+let resumeAfterNotice = false;
+let currentNotice;
 const uiData=fetch(new URL('./game/ui.json',import.meta.url)).then(r=>r.ok?r.json():{achievements:[]}).catch(()=>({achievements:[]}));
-async function showNotice(detail){
- const data=await uiData;
- if(detail.kind==='achievement'){const item=data.achievements.find(x=>x.id===detail.id);say('Achievement unlocked: '+(item?.title||'Achievement'));status.classList.add('toast');clearTimeout(toastTimer);toastTimer=setTimeout(()=>status.classList.remove('toast'),4000);return;}
- noticeTitle.textContent=detail.kind==='achievements'?'Achievements':detail.title||'Order Up!! To Go';noticeBody.replaceChildren();
- if(detail.kind==='achievements'){
-  const list=document.createElement('ol');for(const item of (data.achievements.length?data.achievements:Array.from({length:30},(_,i)=>({id:i+13,title:'Achievement '+(i+1),description:''})))){const li=document.createElement('li'),title=document.createElement('strong'),description=document.createElement('p');title.textContent=(detail.unlocked.includes(item.id)?'✓ ':'○ ')+item.title;description.textContent=item.description;li.append(title,description);list.append(li);}noticeBody.append(list);
- }else noticeBody.textContent=detail.message||'';
- if(!notice.open){resumeAfterNotice=state.state==='running';tutorialControls?.hide();notice.showModal();noticeTitle.tabIndex=-1;noticeTitle.focus({preventScroll:true});notice.scrollTop=0;await state.controller?.pause();}
- if(detail.kind==='coin-store')await showCoinStore(state,notice,noticeBody,detail.silverOnly,failed);
+async function showNotice(detail) {
+  const data = await uiData;
+  if (detail.kind === 'achievement') {
+    const item = data.achievements.find(item => item.id === detail.id);
+    renderAchievementToast(status, detail.id, item?.title || 'Achievement', dialogIcon);
+    status.classList.add('toast');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => status.classList.remove('toast'), 4000);
+    return;
+  }
+
+  currentNotice = detail;
+  notice.dataset.kind = detail.kind;
+  noticeTitle.textContent = detail.kind === 'achievements' ? 'Achievements' : detail.title || 'Order Up!! To Go';
+  noticeSummary.hidden = detail.kind !== 'achievements' && detail.kind !== 'coin-store';
+  noticeSummary.textContent = '';
+  noticeBody.replaceChildren();
+  if (detail.kind === 'achievements') {
+    renderAchievements(noticeBody, noticeSummary, data.achievements, detail.unlocked, dialogIcon);
+  } else if (detail.kind === 'coin-store') {
+    noticeSummary.textContent = 'Coin packs and upgrades are free in this version.';
+  } else {
+    noticeBody.textContent = detail.message || '';
+  }
+  const opening = !notice.open;
+  if (opening) {
+    resumeAfterNotice = state.state === 'running';
+    tutorialControls?.hide();
+    notice.showModal();
+    noticeTitle.focus({preventScroll: true});
+  }
+  noticeBody.scrollTop = 0;
+  if (opening) await state.controller?.pause();
+  if (detail.kind === 'coin-store' && currentNotice === detail && notice.open) {
+    await showCoinStore(state, notice, noticeBody, detail.silverOnly, dialogIcon, failed);
+  }
 }
 document.querySelector('#notice-close').addEventListener('click',()=>notice.close());
 notice.addEventListener('close',()=>{if(resumeAfterNotice&&!document.hidden)state.controller?.resume();});
@@ -81,6 +114,7 @@ async function start(){
   sound.addEventListener('click',unlockAudio);audioContext.addEventListener('statechange',state.updateSound);unlockAudio();
   const assets=await assetsReady;if(!assets)return;const {data,emulator}=assets;
   const files=new Map(paths.slice(1).map((p,i)=>[p,{data:data[i+1],writable:false}]));
+  dialogIcon = createDialogIcons(files.get('/game/orderup.apk').data);
   const saves=await openSaves(),pendingSaves=[];for(const [p,file] of saves.files)files.set(p,file);
   loadingPhase('engine');const graphics=new GameGraphics(canvas,{log:event=>console.log('[graphics]',JSON.stringify(event))});
   const audio=new GameAudio(data[3],audioContext);

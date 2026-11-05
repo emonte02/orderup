@@ -83,6 +83,9 @@ export function installJNI(r){
 
 /** Retired Android services use the original unavailable-service callbacks. */
 export function installPlatformServices(r){
+ const coinStoreTitles = new Map([
+  ['showGoldIAP', 'Coin Shop'], ['showSilverIAP', 'Silver Upgrades'], ['showOfferWall', 'Free Coins'],
+ ]);
  r.hostCallbacks=[];
  r.pumpHostCallbacks=async()=>{for(const callback of r.hostCallbacks.splice(0))await r.call(callback.name,[r.jniEnv,0,...callback.args]);};
  const notice=detail=>{r.events.push({type:'platform-notice',...detail});r.onNotice?.(detail);};
@@ -94,7 +97,10 @@ export function installPlatformServices(r){
   if(['moveTaskToBack','openURL','openAppLink','launchGameCircle'].includes(m.name)){notice({kind:'dialog',title:'Order Up!! To Go',message:m.name==='moveTaskToBack'?'You can close this tab to leave the game. Your latest saved progress stays on this computer.':'The original online service is no longer available. Your game progress and achievements are saved on this computer.'});return 0;}
   if(m.name==='showAchievement'){notice({kind:'achievement',id:args[0]});return 0;}
   if(m.name==='showAchievementsUI'){const array=r.javaObjects.get(args[0]);notice({kind:'achievements',unlocked:array?Array.from({length:array.length},(_,i)=>r.u32(array.address+i*4)):[]});return 0;}
-  if(['showGoldIAP','showSilverIAP','showOfferWall'].includes(m.name)){notice({kind:'coin-store',title:'Order Up!! Purchases',silverOnly:m.name==='showSilverIAP'});return 0;}
+  if (coinStoreTitles.has(m.name)) {
+   notice({kind: 'coin-store', title: coinStoreTitles.get(m.name), silverOnly: m.name === 'showSilverIAP'});
+   return 0;
+  }
   if(['disableAds','purchaseMysteryGift'].includes(m.name)){notice({kind:'dialog',title:'Purchases unavailable',message:'The original purchase service is no longer available. You can still earn coins by playing.'});return 0;}
   if(m.name==='displayGenericDialog'||m.name==='displayIAPConfirmationDialog'){notice({kind:'dialog',title:'Order Up!! To Go',message:r.javaObjects.get(args[0])?.value||''});return 0;}
   if(m.name==='displayDialog'){notice({kind:'dialog',title:'Order Up!! To Go',message:args[0]===3?'Double Silver Coins purchased.':args[0]===4?'Double Silver Coins - 5 Shifts purchased.':args[0]===5?'Double Silver Coins - 15 Shifts purchased.':args[0]===8?'The original purchase service is no longer available. Your saved progress is kept on this computer.':args[0]===11?'To leave the game, close this tab. Your latest saved progress will be here when you return.':'This online service is no longer available.'});return 0;}

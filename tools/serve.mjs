@@ -8,6 +8,8 @@ export function createGameServer(){
  let artwork;
  const routes=new Map([
   ['/', ['port/web/index.html','text/html']],['/apple-touch-icon.png',['port/web/apple-touch-icon.png','image/png']],['/app.mjs',['port/web/app.mjs','text/javascript']],['/mouse.mjs',['port/web/mouse.mjs','text/javascript']],['/loop.mjs',['port/web/loop.mjs','text/javascript']],
+  ['/dialogs.mjs',['port/web/dialogs.mjs','text/javascript']],
+  ['/dialogs.css',['port/web/dialogs.css','text/css']],
   ['/store.mjs',['port/web/store.mjs','text/javascript']],
   ['/fullscreen.mjs',['port/web/fullscreen.mjs','text/javascript']],
   ['/loading.css',['port/web/loading.css','text/css']],
@@ -19,7 +21,7 @@ export function createGameServer(){
   ['/game/ui.json',['analysis/game-platform-ui.json','application/json']],
   ['/game/orderup.apk',['originals/orderup-1.65.apk','application/octet-stream']],['/game/main.13.com.svsgames.orderup.obb',['originals/main.13.com.svsgames.orderup.obb','application/octet-stream']],['/game/patch.13.com.svsgames.orderup.obb',['originals/patch.13.com.svsgames.orderup.obb','application/octet-stream']],
  ]);
- for(const name of ['elf','memory','runtime','libc','threads','jni','graphics','graphics_batch','audio','persistence','optimizations','tutorial','fullscreen'])routes.set('/runtime/'+name+'.mjs',['port/runtime/'+name+'.mjs','text/javascript']);
+ for(const name of ['elf','memory','runtime','libc','threads','jni','graphics','graphics_batch','audio','zip','persistence','optimizations','tutorial','fullscreen'])routes.set('/runtime/'+name+'.mjs',['port/runtime/'+name+'.mjs','text/javascript']);
  return http.createServer((req,res)=>{
   const artName=new URL(req.url,'http://localhost').pathname.match(/^\/art\/(logo|inspector)\.png$/)?.[1];
   if(artName){

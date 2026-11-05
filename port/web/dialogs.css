@@ -1,0 +1,193 @@
+/* Browser popups use the same cream order paper, teal rays and counter checks as the loader. */
+#notice, #status.toast {
+  --paper: #fff7e4;
+  --ink: #214e61;
+  --rule: #d6c5a0;
+  --display: Impact, 'Arial Narrow', system-ui, sans-serif;
+  color-scheme: light;
+  color: var(--ink);
+  background: var(--paper);
+  font-family: 'Avenir Next', system-ui, sans-serif;
+}
+#notice {
+  width: min(690px, calc(100% - 28px));
+  max-width: calc(100vw - 16px);
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - max(32px, env(safe-area-inset-top) + env(safe-area-inset-bottom) + 12px));
+  margin: auto;
+  padding: 0;
+  border: 3px solid #214e61;
+  border-radius: 16px;
+  box-shadow: 0 5px 0 #123e50, 0 14px 40px #08253666;
+  overflow: hidden;
+}
+#notice[open] { display: flex; flex-direction: column; }
+#notice[data-kind='dialog'] { width: min(465px, calc(100% - 28px)); }
+#notice::backdrop { background: #082d3bb3; }
+.notice-header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 17px 24px;
+  color: #fff5d9;
+  background: repeating-conic-gradient(from -10deg at 13% 140%, #ffffff09 0deg 12deg, transparent 12deg 24deg),
+              linear-gradient(115deg, #187e9a, #18536e);
+  border-bottom: 4px solid #f2b637;
+}
+#notice-title {
+  margin: 0;
+  font: 400 clamp(28px, 5vw, 40px)/1.08 var(--display);
+  text-shadow: 2px 3px #123e51;
+  overflow-wrap: anywhere;
+}
+#notice-title:focus { outline: none; }
+#notice-summary { margin: 7px 0 0; font-size: 14px; line-height: 1.4; }
+.notice-logo { flex: none; width: 82px; height: auto; transform: rotate(-5deg); filter: drop-shadow(1px 3px 0 #103c554d); }
+#notice-body {
+  min-height: 0;
+  padding: 20px 23px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: #8baba9 var(--paper);
+  overflow-wrap: anywhere;
+}
+#notice-body:focus-visible { outline: 2px solid #17758d; outline-offset: -3px; }
+#notice[data-kind='dialog'] #notice-body { padding-block: 25px; white-space: pre-line; font-size: 16px; line-height: 1.55; }
+.notice-footer {
+  position: relative;
+  flex: none;
+  display: flex;
+  justify-content: flex-end;
+  padding: 11px 23px 20px;
+  border-top: 2px dashed var(--rule);
+}
+.notice-footer::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 10px;
+  background: conic-gradient(#f8eccf 25%, #205569 0 50%, #f8eccf 0 75%, #205569 0) 0 0 / 10px 10px;
+}
+#notice button {
+  border: 2px solid #d5911c;
+  border-radius: 7px 7px 10px 10px;
+  color: #493211;
+  background: linear-gradient(#ffcf4b, #ffa81a);
+  box-shadow: inset 0 1px #ffe8a2, 0 3px 0 #a16828;
+  font: 400 20px/1.1 var(--display);
+}
+#notice button:hover:enabled { background: linear-gradient(#ffdf75, #ffba2d); }
+#notice button:active:enabled { transform: translateY(2px); box-shadow: 0 1px 0 #a16828; }
+#notice button:focus-visible { outline: 3px solid #156b83; outline-offset: 2px; }
+#notice button:disabled { cursor: default; }
+#notice-close { min-width: 124px; min-height: 43px; padding: 6px 20px; }
+
+.coin-menu { display: grid; gap: 18px; }
+.coin-menu h3 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 9px;
+  font: 700 12px/1.3 'Avenir Next', system-ui, sans-serif;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.coin-menu h3::after { content: ''; flex: 1; border-top: 2px dashed var(--rule); }
+.coin-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.coin-options li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas: 'art name' 'art buy';
+  align-items: center;
+  gap: 4px 10px;
+  padding: 10px;
+  border: 1px solid #d7c69e;
+  border-radius: 9px;
+  background: #fffcf2;
+  box-shadow: 0 2px 0 #d8c6a0;
+}
+.coin-options img { grid-area: art; width: 58px; height: 58px; object-fit: contain; }
+.coin-options strong { grid-area: name; font: 400 22px/1.1 var(--display); }
+.coin-options button { grid-area: buy; justify-self: start; min-width: 58px; min-height: 34px; padding: 3px 10px; }
+#notice .coin-options button:disabled { color: #58665a; background: #e5e6d3; border-color: #acb59a; box-shadow: none; opacity: 1; }
+.purchase-receipt { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 14px 0; font-size: 18px; font-weight: 700; }
+.purchase-receipt img { width: 64px; height: 64px; }
+
+.achievement-list { list-style: none; margin: 0; padding: 0; }
+.achievement-list li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+}
+.achievement-list li + li { border-top: 1px dashed var(--rule); }
+.achievement-list li:first-child { padding-top: 0; }
+.achievement-list li:last-child { padding-bottom: 0; }
+.achievement-list img { width: 48px; height: 48px; }
+.achievement-list strong { font-size: 16px; line-height: 1.25; }
+.achievement-list p { margin: 3px 0 0; color: #4c6467; font-size: 14px; line-height: 1.4; }
+.achievement-state { font-weight: 650; font-size: 11px; color: #64716d; }
+[data-earned='true'] .achievement-state { color: #28613c; }
+[data-earned='true'] .achievement-state::before { content: '✓'; margin-right: 3px; }
+
+#status.toast {
+  position: fixed;
+  z-index: 4;
+  top: max(14px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: max-content;
+  max-width: calc(100vw - 28px);
+  height: auto;
+  margin: 0;
+  padding: 10px 16px;
+  border: 2px solid var(--ink);
+  border-bottom: 4px solid #edaf35;
+  border-radius: 10px;
+  box-shadow: 0 3px 0 #123f5b66;
+  clip: auto;
+  white-space: normal;
+  overflow: visible;
+  pointer-events: none;
+  font-size: 15px;
+  line-height: 1.35;
+}
+#status.toast img { width: 42px; height: 42px; }
+#status.toast strong { display: block; font: 400 20px/1.15 var(--display); }
+@media (max-width: 620px) {
+  .coin-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .notice-header { padding: 14px 17px; gap: 10px; }
+  .notice-logo { width: 62px; }
+  #notice-body { padding: 15px; }
+  .notice-footer { padding-inline: 15px; }
+  .coin-options li { gap: 4px 6px; padding: 8px; }
+  .coin-options img { width: 44px; height: 44px; }
+  .coin-options strong { font-size: 19px; }
+  .achievement-list li { gap: 8px; }
+  .achievement-list img { width: 40px; height: 40px; }
+}
+@media (max-width: 360px) {
+  .coin-options li { grid-template: 'art' 'name' 'buy' / 1fr; justify-items: center; }
+  .coin-options button { justify-self: center; }
+}
+@media (pointer: coarse) { .coin-options button, #notice-close { min-height: 44px; } }
+@media (max-height: 450px) {
+  .notice-header { padding: 8px 16px; }
+  .notice-logo { width: 50px; }
+  #notice-title { font-size: 27px; }
+  #notice-summary { margin-top: 3px; }
+  .notice-footer { padding-block: 6px 15px; }
+}
