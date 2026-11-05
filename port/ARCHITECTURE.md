@@ -35,7 +35,7 @@ This is a library compatibility layer, with no Android OS image or server video 
 
 The original reopening timer indexes before its duration array when the shutdown type is None (-1). On modern dates, the resulting integer wrap displays a decades-long countdown and stalls the script while formatting it. A native hook returns zero only for None. Real shutdown types execute the untouched ARM routine. See `analysis/timer-compatibility.json`.
 
-Retired ads follow the original ad-unavailable completion callback, allowing menu/day transitions to continue. Original achievements use a browser panel populated with the APK’s own labels. Coin-store dialogs fulfill the original gold-pack and double-silver product IDs locally through the native purchase callback, while the frame controller is paused; no billing service is contacted. Other retired purchases, offers, links and leaderboards show a dismissible message.
+Retired ads follow the original ad-unavailable completion callback, allowing menu/day transitions to continue. Original achievements use a browser panel populated with the APK’s own labels. The original Free Coins button and coin-store dialogs fulfill the original gold-pack and double-silver product IDs locally through the native purchase callback, while the frame controller is paused; no billing service is contacted. Other retired purchases, links and leaderboards show a dismissible message.
 
 ## Emulator build and fixes
 

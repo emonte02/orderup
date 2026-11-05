@@ -9,7 +9,6 @@ try{
  const page=await session.open('store',new URL(process.env.OU_STORE_FIXTURE||'analysis/tutorial-save-fixture.json',root));
  const externalRequests=[];page.on('request',request=>{if(new URL(request.url()).origin!==session.url)externalRequests.push(request.url());});
  const continueGame=async()=>{await page.evaluate(()=>orderup.controller.resume());await tapCanvasLabel(page,'Continue',{timeout:120000});await waitSceneContent(page);await page.evaluate(()=>orderup.controller.pause());};
- await continueGame();console.log('Continued isolated save');
  const balances=()=>page.evaluate(async()=>{
   const r=orderup.runtime,prefix='Java_com_svsgames_orderup_OrderUpJNILib_',gameData=r.u32(r.elf.address('_ZN12ChefGameData9g_ManagerE'));
   const name=r.cstring('DoubleCoinDaysRemaining');let crc;try{crc=await r.call('_ZN3Crc21GenerateCRCFromStringEPKcj',[name,0xffffffff]);}finally{r.free(name);}
@@ -32,7 +31,19 @@ try{
   await page.waitForFunction(()=>orderup.error||(/purchased\./.test(document.querySelector('#notice-body').textContent)&&!document.querySelector('#notice-close').disabled));
   assert.equal(await page.evaluate(()=>orderup.error),null);
  };
- const before=await balances();
+ // Follow the exact title-menu entry reported by the player, in portrait layout.
+ const titleBefore=await balances();
+ await page.setViewportSize({width:390,height:844});
+ await page.evaluate(()=>orderup.controller.resume());
+ await tapCanvasLabel(page,'FREE COINS!!',{timeout:120000});
+ await page.locator('[data-product]').first().waitFor();
+ await page.waitForFunction(()=>orderup.state==='paused'&&!document.querySelector('#notice-close').disabled);
+ assert.equal(await page.locator('[data-product]').count(),9);
+ await page.screenshot({path:new URL('analysis/store-free-coins-portrait.png',root).pathname});
+ await buy('gold_coins_30');assert.equal((await balances()).gold,titleBefore.gold+30);await closeStore();
+ await page.setViewportSize({width:1100,height:850});
+ await continueGame();console.log('Free Coins button granted 30 gold; continued isolated save');
+ const before=await balances();assert.equal(before.gold,titleBefore.gold+30,'Title-menu purchase must survive Continue');
  await openStore(false);assert.equal(await page.locator('[data-product]').count(),9);
  await page.screenshot({path:new URL('analysis/store-gold.png',root).pathname});
  await page.keyboard.press('Escape');await page.waitForFunction(()=>!document.querySelector('#notice').open&&orderup.state==='running');await page.evaluate(()=>orderup.controller.pause());
@@ -61,6 +72,6 @@ try{
  await openStore(false);assert.equal(await page.locator('[data-product]:disabled').count(),3);await closeStore();
  const frame=await page.evaluate(()=>orderup.frames);await page.evaluate(()=>orderup.controller.resume());await page.waitForFunction(frame=>orderup.error||orderup.frames>frame+10,frame);assert.equal(await page.evaluate(()=>orderup.error),null);await page.evaluate(()=>orderup.controller.pause());
  assert.deepEqual(externalRequests,[],'Store and reward fulfillment must make no external requests');
- const report={all_gold_packs:true,silver_upgrades:true,cancel_without_purchase:true,duplicate_click_grants_once:true,save_reload:true,resume_after_store:true,no_external_requests:true,before,saved,restored};
+ const report={free_coins_button:true,title_purchase_survives_continue:true,portrait_store:true,all_gold_packs:true,silver_upgrades:true,cancel_without_purchase:true,duplicate_click_grants_once:true,save_reload:true,resume_after_store:true,no_external_requests:true,before,saved,restored};
  fs.writeFileSync(new URL('analysis/store-browser-tests.json',root),JSON.stringify(report,null,2)+'\n');console.log(report);
 }finally{await session.close();}
