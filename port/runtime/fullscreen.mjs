@@ -16,10 +16,10 @@ const api={
 };
 const type={panel:0x5d522cf0,image:0x3ac2fba0,text:0xc4745838};
 function checksum(name){let value=0xffffffff;for(const ch of name.toLowerCase()){value^=ch.charCodeAt(0);for(let i=0;i<8;i++)value=(value>>>1)^((value&1)?0xedb88320:0);}return value>>>0;}
-const names={button:checksum('browser_fullscreen_panel'),overview:checksum('worldmap_exit_panel'),district:checksum('worldmap_back_panel')};
+const names={button:checksum('browser_fullscreen_panel'),main:checksum('mainmenu'),overview:checksum('worldmap_exit_panel'),district:checksum('worldmap_back_panel')};
 
 /** Call update only between completed guest entry points, on the frame loop. */
-export function createNativeFullscreen(runtime,{enabled=()=>true,label=()=> 'Full Screen',pressed=()=>false,onBounds=()=>{}}={}){
+export function createNativeFullscreen(runtime,{enabled=()=>true,label=()=> 'Full Screen',pressed=()=>false,onBounds=()=>{},onMainMenu=()=>{}}={}){
  const r=runtime,managerAddress=r.elf.address('_ZN4Menu9g_ManagerE');
  const call=(name,...args)=>r.call(api[name],args);
  const children=panel=>{
@@ -38,7 +38,8 @@ export function createNativeFullscreen(runtime,{enabled=()=>true,label=()=> 'Ful
  };
  let previousLabel='',previousPanel=0;
  return {async update(){
-  const manager=r.u32(managerAddress);if(!manager){onBounds(null);return;}
+  const manager=r.u32(managerAddress);if(!manager){onMainMenu(false);onBounds(null);return;}
+  onMainMenu(visible(await call('find',manager,names.main,1)));
   let panel=await call('find',manager,names.button,1);
   let back=await call('find',manager,names.overview,1);
   if(!visible(back))back=await call('find',manager,names.district,1);

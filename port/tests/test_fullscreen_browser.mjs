@@ -6,6 +6,7 @@ import {readCanvasText} from './scene_helpers.mjs';
 const session=await createGameSession(),errors=[],layouts=[];
 try{
  const page=await session.open('fullscreen','analysis/worldclass-earned-fixture.json');page.on('pageerror',error=>errors.push(String(error)));
+ assert.equal(await page.locator('#fullscreen').isVisible(),true,'Main menu shows fullscreen');
  await page.evaluate(()=>orderup.controller.resume());await tapCanvasLabel(page,'Continue',{after:500});
  const waitButton=async()=>{await page.waitForFunction(()=>orderup.error||orderup.fullscreen.bounds,null,{timeout:120000});assert.equal(await page.evaluate(()=>orderup.error),null);const frame=await page.evaluate(()=>orderup.frames);await page.waitForFunction(n=>orderup.frames>n+10,frame);};
  const clickButton=async()=>{const p=await page.evaluate(()=>{const c=document.querySelector('canvas'),box=c.getBoundingClientRect(),b=orderup.fullscreen.bounds;return{x:box.left+(b.x+b.width/2)*box.width/c.width,y:box.top+(b.y+b.height/2)*box.height/c.height};});await page.mouse.click(p.x,p.y);};
@@ -57,6 +58,7 @@ try{
  await page.screenshot({path:'analysis/fullscreen-native-return.png'});
  await tapCanvasLabel(page,'Back',{after:1500});
  await page.waitForFunction(()=>!orderup.fullscreen.bounds);
+ assert.equal(await page.locator('#fullscreen').isVisible(),true,'Returning to the main menu restores fullscreen');
  assert.equal((await navigation()).browser_fullscreen_panel.exists,false,'Leaving the map destroys the added native menu');
  await tapCanvasLabel(page,'Continue',{after:500});await waitButton();
  assert((await readCanvasText(page)).some(row=>row.text==='Full Screen'));
