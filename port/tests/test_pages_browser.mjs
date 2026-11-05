@@ -18,7 +18,7 @@ try{
    if(!name.startsWith('/orderup/')){res.writeHead(404);res.end();return;}
    const file=path.resolve(site,name.slice('/orderup/'.length)||'index.html');
    if(!file.startsWith(site+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile()){res.writeHead(404);res.end();return;}
-   const type=file.endsWith('.html')?'text/html':file.endsWith('.mjs')||file.endsWith('.js')?'text/javascript':'application/octet-stream';
+   const type=file.endsWith('.html')?'text/html':file.endsWith('.css')?'text/css':file.endsWith('.png')?'image/png':file.endsWith('.mjs')||file.endsWith('.js')?'text/javascript':'application/octet-stream';
    res.setHeader('Content-Type',type);fs.createReadStream(file).pipe(res);
   });
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));url='http://127.0.0.1:'+server.address().port+'/orderup/';
@@ -32,6 +32,8 @@ try{
  await page.goto(url,{waitUntil:'domcontentloaded'});
  assert.equal(await page.locator('input[type="file"]').count(),0,'The hosted game must never request local files');
  assert.equal(await page.locator('#start').isVisible(),false,'Startup must not require a click');
+ await page.waitForFunction(()=>[...document.querySelectorAll('.loading-art img')].every(image=>image.complete&&image.naturalWidth>0));
+ assert.equal(await page.locator('.loading-layout').evaluate(element=>getComputedStyle(element).display),'grid','The packaged loading stylesheet must be applied');
  console.log('Starting the complete hosted game in a fresh browser at '+url);
  await page.waitForFunction(()=>orderup.state==='failed'||orderup.frames>=60,null,{timeout:600000});
  assert.equal(await page.evaluate(()=>orderup.error),null);
@@ -41,7 +43,7 @@ try{
  const download=await page.evaluate(()=>({bytes:orderup.startup.bytes_loaded,total:orderup.startup.bytes_total,files:orderup.startup.files_loaded}));
  assert.deepEqual(download,{bytes:expectedBytes,total:expectedBytes,files:6});
  await page.locator('#loading-panel').waitFor({state:'hidden'});
- assert.equal(await page.locator('#fullscreen').count(),0,'The player has no Full screen button');
+ await page.click('#fullscreen');await page.waitForFunction(()=>!!document.fullscreenElement);await page.click('#fullscreen');await page.waitForFunction(()=>!document.fullscreenElement);
  const box=await page.locator('canvas').boundingBox();await page.mouse.move(box.x+box.width*.25,box.y+box.height*.5);await page.mouse.down();await page.mouse.move(box.x+box.width*.5,box.y+box.height*.5);await page.mouse.up();
  const input=await page.evaluate(()=>orderup.input.splice(0));assert.deepEqual(input.map(e=>e[1]),[0,2,1]);
  assert.deepEqual(errors,[]);assert.deepEqual(badResponses,[]);
@@ -52,6 +54,6 @@ try{
  const stem=process.env.OU_PAGES_URL?'pages-live':'pages-local';
  await page.screenshot({path:path.join(root,'analysis',stem+'.png')});
  const buildResponse=await page.request.get(new URL('build.json',resourceBase).href);assert.equal(buildResponse.ok(),true);const build=await buildResponse.json();const scriptRequests=requests.filter(req=>{const p=new URL(req.url).pathname;return p.endsWith('.mjs')||p.endsWith('/unicorn.js');});assert(scriptRequests.length>10);assert(scriptRequests.every(req=>new URL(req.url).searchParams.get('v')===build.version),'Every module and the engine must bypass an older cached build');
- Object.assign(report,{url,build,all_player_modules_versioned:true,automatic_downloads:download,no_local_files_required:true,fresh_browser_boot:true,no_fullscreen_button:true,mouse_drag:true,no_uploads:true,page_errors:errors,network_errors:badResponses});
+ Object.assign(report,{url,build,all_player_modules_versioned:true,automatic_downloads:download,no_local_files_required:true,fresh_browser_boot:true,fullscreen:true,mouse_drag:true,no_uploads:true,page_errors:errors,network_errors:badResponses});
  fs.writeFileSync(path.join(root,'analysis',stem+'.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report,null,2));
 }finally{await browser?.close();if(server)await new Promise(resolve=>server.close(resolve));}

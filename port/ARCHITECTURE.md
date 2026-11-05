@@ -30,6 +30,8 @@ This is a library compatibility layer, with no Android OS image or server video 
 - `runtime/audio.mjs`: stored original Ogg streams, playback completion callbacks, volume/looping and the original 22,050 Hz mono 16-bit PCM mixer. Completed players and JNI references are released; local JNI references expire when each native entry returns.
 - `runtime/persistence.mjs`: original encrypted save-file writes/renames/removals committed to IndexedDB and loaded into the guest filesystem on startup. Bionic FILE descriptors and ftruncate support the original decryption pipeline; temporary plaintext files remain transient.
 - `web/mouse.mjs`, `web/loop.mjs`: browser pointer capture and scaled original touch coordinates. DOWN and UP reach separate native steps; redundant motion is coalesced. Right-click and Escape reproduce Android Back, including key release across platform dialogs. The original JNI activity-indicator callback drives a nonblocking Loading indicator during scene transitions. Updates target up to 60 Hz, retaining the original wall-clock game timing. MessageChannel scheduling avoids nested timer clamping; input and native updates remain serialized. Tab visibility pauses game time/audio and native execution, then resumes without a time jump.
+- `runtime/fullscreen.mjs`: adds native image/text menu elements beside the world map's Back control, reusing its image, font, shadow and vertical placement. Native setters retain resources and the original menu tree owns destruction. Updates run between guest steps, and element lookup avoids retaining pointers across scene changes. `web/fullscreen.mjs` maps the rendered control's bounds to browser pointer activation, provides keyboard access, and calls the Fullscreen API directly from the user gesture. Escape exits full screen without also sending Android Back. The ordinary browser control remains available on other screens and while loading.
+- `web/loading.css`: responsive diner-style loading and retry screens, with the original title logo and Manhorn loading-screen artwork. `tools/loading_art.mjs` extracts their WAD entries, decodes the original ETC1 color/alpha textures and exports PNG sprites with transparent margins removed. Packaging generates these assets from the verified OBB release; the local server generates them once in memory. The two sprites total about 193 KB, load before the engine, and require no new dependencies or game binaries in Git. CSS and artwork participate in the player version hash. Download counts, elapsed time, startup phases and automatic launch keep their existing behavior.
 
 ## Compatibility fixes
 
@@ -81,6 +83,8 @@ python3 tools/test_ram_api.py
 node port/tests/test_script_marks_wasm.mjs
 node port/tests/test_engine_browser.mjs
 node port/tests/test_mouse.mjs
+node port/tests/test_fullscreen.mjs
+node port/tests/test_fullscreen_browser.mjs
 node port/tests/test_hot_wasm.mjs
 node port/tests/test_decompression_wasm.mjs
 node port/tests/test_decompression_assets.mjs
@@ -106,7 +110,7 @@ The `game-data-1.65` release supplies the exact seven runtime-data files in `gam
 
 `node tools/package_pages.mjs` assembles the browser code, emulator, notices, and verified runtime data into `_site/`. The Pages workflow retrieves the release before packaging. `web/downloads.mjs` fetches and verifies each game file automatically using project-relative URLs. Download progress measures decoded bytes from the manifest, so HTTP gzip does not break progress or size checks. There is no file picker. Every packaged module and the engine share a content-derived version query, so returning players receive one coherent build instead of a mixture of old cached code. `build.json` identifies the version and engine hash. Existing browser saves keep their original format and database.
 
-`tests/test_downloads.mjs` checks automatic downloads, project-relative paths, gzip handling, integrity checks, and missing/truncated/oversized file failures with small synthetic payloads. `tests/test_pages_browser.mjs` starts the complete player in a fresh browser without local game files and verifies engine boot, audio, mouse input, automatic data loading, and the absence of a Full screen button. Set `OU_PAGES_URL` to run the same test against the published site.
+`tests/test_downloads.mjs` checks automatic downloads, project-relative paths, gzip handling, integrity checks, and missing/truncated/oversized file failures with small synthetic payloads. `tests/test_pages_browser.mjs` starts the complete player in a fresh browser without local game files and verifies engine boot, audio, full screen, mouse input, automatic data loading, and the loading artwork and stylesheet. Set `OU_PAGES_URL` to run the same test against the published site.
 
 ## Performance C ports
 
