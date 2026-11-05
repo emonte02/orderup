@@ -39,6 +39,10 @@ try{
  await page.locator('[data-product]').first().waitFor();
  await page.waitForFunction(()=>orderup.state==='paused'&&!document.querySelector('#notice-close').disabled);
  assert.equal(await page.locator('[data-product]').count(),9);
+ assert.equal(await page.locator('#notice-title').textContent(),'Free Coins');
+ const icons=page.locator('.coin-options img:not([hidden])');
+ assert.equal(await icons.count(),9,'Each offer uses an original store illustration');
+ await icons.evaluateAll(images=>Promise.all(images.map(image=>image.decode())));
  await page.screenshot({path:new URL('analysis/store-free-coins-portrait.png',root).pathname});
  await buy('gold_coins_30');assert.equal((await balances()).gold,titleBefore.gold+30);await closeStore();
  await page.setViewportSize({width:1100,height:850});

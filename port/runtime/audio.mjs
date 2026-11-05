@@ -1,11 +1,7 @@
+import {readStoredFiles} from './zip.mjs';
 /** Original stored Ogg streams plus the original 22,050 Hz mono PCM mixer. */
 export class GameAudio {
- constructor(patch,context){this.context=context;this.files=new Map();this.players=new Set();this.decoded=0;this.errors=[];this.pending=[];this.nextPCM=0;this.mixedBuffers=0;this.history=[];
-  const v=new DataView(patch.buffer,patch.byteOffset,patch.byteLength);let end=patch.length-22;while(end>=Math.max(0,patch.length-65557)&&v.getUint32(end,true)!==0x06054b50)end--;if(end<0)throw Error('Patch ZIP directory missing');
-  const count=v.getUint16(end+10,true);let p=v.getUint32(end+16,true);for(let i=0;i<count;i++){
-   if(v.getUint32(p,true)!==0x02014b50)throw Error('Bad patch ZIP directory');const method=v.getUint16(p+10,true),size=v.getUint32(p+20,true),n=v.getUint16(p+28,true),extra=v.getUint16(p+30,true),comment=v.getUint16(p+32,true),local=v.getUint32(p+42,true),name=new TextDecoder().decode(patch.subarray(p+46,p+46+n)).toLowerCase();
-   if(!name.endsWith('/')){if(method!==0)throw Error('Unsupported compressed patch member '+name);if(v.getUint32(local,true)!==0x04034b50)throw Error('Bad ZIP local member');const start=local+30+v.getUint16(local+26,true)+v.getUint16(local+28,true);if(start+size>patch.length)throw Error('ZIP member exceeds patch');this.files.set(name,patch.subarray(start,start+size));}p+=46+n+extra+comment;
-  }
+ constructor(patch,context){this.context=context;this.files=readStoredFiles(patch);this.players=new Set();this.decoded=0;this.errors=[];this.pending=[];this.nextPCM=0;this.mixedBuffers=0;this.history=[];
  }
  create(r,filename,stream){const name=filename.slice(filename.lastIndexOf('|')+1).toLowerCase()+'.ogg',bytes=this.files.get(name);if(!bytes){r.events.push({type:'audio-missing',name});return 0;}
   this.history.push(name);if(this.history.length>256)this.history.shift();
