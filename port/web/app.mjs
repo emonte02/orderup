@@ -80,7 +80,7 @@ async function start(){
   say('Starting the original game…');state.state='initializing';loadingPhase('initializers');await runtime.initialize();state.initializersCompleted=true;loadingPhase('game');await runtime.boot();state.bootCompleted=true;loadingPhase('menu');
   bindMouse(canvas,(...args)=>{const last=state.input.at(-1);if(args[1]===2&&last?.[1]===2)state.input[state.input.length-1]=args;else state.input.push(args);});state.state='running';say('Opening the game…');button.hidden=true;
   let storage;try{storage=globalThis.localStorage;}catch{}
-  tutorialControls=createTutorialControls({overlay:document.querySelector('#tutorial-overlay'),skipButton:document.querySelector('#skip-tutorial'),preferenceButton:document.querySelector('#tutorial-preference'),state,say,storage,tutorial:createTutorialSkipper(runtime)});
+  tutorialControls=createTutorialControls({overlay:document.querySelector('#tutorial-overlay'),skipButton:document.querySelector('#skip-tutorial'),state,storage,tutorial:createTutorialSkipper(runtime)});
   state.flushSaves=()=>Promise.all(pendingSaves.splice(0));state.controller=startFrameLoop(state,runtime,{flushSaves:state.flushSaves,afterFrame:context=>tutorialControls.afterFrame(context),onFailure:error=>{tutorialControls.hide();failed(error);}});
   document.addEventListener('visibilitychange',()=>{if(document.hidden||notice.open){tutorialControls.hide();state.controller.pause();}else state.controller.resume();});
   if(document.hidden)state.controller.pause();

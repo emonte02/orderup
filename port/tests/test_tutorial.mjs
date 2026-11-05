@@ -1,38 +1,47 @@
 import assert from 'node:assert/strict';
-import {createTutorialControls,readTutorialPreference,writeTutorialPreference,tutorialPreferenceKey} from '../web/tutorial.mjs';
-
-const storage=()=>({values:new Map(),getItem(key){return this.values.get(key)??null;},setItem(key,value){this.values.set(key,value);}});
-const first=storage(),other=storage();
-assert.equal(readTutorialPreference(first),false);
-writeTutorialPreference(first,true);
-assert.equal(readTutorialPreference(first),true);
-assert.equal(readTutorialPreference(other),false,'Different browser players keep separate preferences');
-first.setItem(tutorialPreferenceKey,'corrupt');assert.equal(readTutorialPreference(first),false);
-const blocked={getItem(){throw Error('Blocked');},setItem(){throw Error('Blocked');}};
-assert.equal(readTutorialPreference(blocked),false);assert.equal(writeTutorialPreference(blocked,true),false);
+import {createTutorialControls} from '../web/tutorial.mjs';
 
 class Button extends EventTarget {
-  attributes=new Map();disabled=false;textContent='';
-  setAttribute(key,value){this.attributes.set(key,value);}
+  disabled=false;textContent='';
   click(){this.dispatchEvent(new Event('click'));}
 }
-function controls(store=storage()) {
-  const overlay={hidden:true},skipButton=new Button(),preferenceButton=new Button(),state={state:'running',input:[]};
-  let active=true,calls=0,failure=false,message='';
-  const ui=createTutorialControls({overlay,skipButton,preferenceButton,state,storage:store,say:text=>message=text,tutorial:{active:()=>active,async skip(){calls++;if(failure)throw Error('Exit failed');active=false;return true;}}});
-  return {ui,overlay,skipButton,preferenceButton,state,store,get calls(){return calls;},get message(){return message;},set active(value){active=value;},set failure(value){failure=value;}};
+function memoryStorage(){const values=new Map();return {getItem:key=>values.get(key)??null,setItem:(key,value)=>values.set(key,value)};}
+function controls(storage=memoryStorage()) {
+  const overlay={hidden:true},skipButton=new Button(),state={state:'running',input:[]};
+  let active=false,calls=0,failure=false;
+  const ui=createTutorialControls({overlay,skipButton,state,storage,tutorial:{active:()=>active,async skip(){calls++;if(failure)throw Error('Exit failed');active=false;return true;}}});
+  return {ui,overlay,skipButton,state,storage,get calls(){return calls;},set active(value){active=value;},set failure(value){failure=value;}};
 }
-const manual=controls();await manual.ui.afterFrame();assert.equal(manual.calls,0);assert.equal(manual.overlay.hidden,false);
-manual.skipButton.click();assert.equal(manual.calls,0,'DOM handlers must not enter a running guest frame');
+const player=controls();
+assert.equal(player.overlay.hidden,true,'No button before the tutorial starts');
+assert.equal(player.skipButton.textContent,'Skip Tutorial');
+player.skipButton.click();player.active=true;await player.ui.afterFrame();
+assert.equal(player.calls,0,'A click outside the tutorial cannot skip it later');
+assert.equal(player.overlay.hidden,false);
+player.skipButton.click();player.skipButton.click();
+assert.equal(player.calls,0,'DOM handlers must not enter a running guest frame');
 let released=false;
-await manual.ui.afterFrame({releaseInput:async()=>{assert.equal(manual.calls,0);released=true;}});assert(released,'Release held input before ending the scene');assert.equal(manual.calls,1);assert.equal(readTutorialPreference(manual.store),true);assert.equal(manual.overlay.hidden,true);
-await manual.ui.afterFrame();assert.equal(manual.calls,1,'No duplicate exit');
-const returning=controls(manual.store);await returning.ui.afterFrame();assert.equal(returning.calls,1,'Saved preference applies to the next tutorial');
-returning.preferenceButton.click();assert.equal(readTutorialPreference(manual.store),false);
-returning.active=true;await returning.ui.afterFrame();assert.equal(returning.calls,1,'Player can re-enable the next tutorial');
-const paused=controls();paused.state.state='paused';paused.skipButton.click();await paused.ui.afterFrame();assert.equal(paused.calls,0);assert.equal(paused.overlay.hidden,true);
-paused.state.state='running';await paused.ui.afterFrame();assert.equal(paused.calls,1);
-const gone=controls();gone.skipButton.click();gone.active=false;await gone.ui.afterFrame();assert.equal(gone.calls,0);assert.equal(readTutorialPreference(gone.store),false,'Stale click does not change preferences');
-const failed=controls();failed.failure=true;failed.skipButton.click();await assert.rejects(failed.ui.afterFrame(),/Exit failed/);assert.equal(readTutorialPreference(failed.store),false);
-const unavailable=controls(blocked);unavailable.skipButton.click();await unavailable.ui.afterFrame();assert.equal(unavailable.calls,1);assert.match(unavailable.message,/could not save/);
-console.log('Tutorial preference, player isolation, frame serialization, opt-in, reset, and failure checks passed.');
+await player.ui.afterFrame({releaseInput:async()=>{assert.equal(player.calls,0);assert.equal(player.overlay.hidden,true);released=true;}});
+assert(released,'Release held input before ending the scene');
+assert.equal(player.calls,1,'Repeated clicks produce one exit');
+assert.equal(player.overlay.hidden,true);
+assert.equal(player.storage.getItem('orderup-skip-tutorial'),'true','Remember the successful click');
+await player.ui.afterFrame();assert.equal(player.calls,1);
+player.active=true;await player.ui.afterFrame();
+assert.equal(player.calls,2,'The remembered choice skips the next tutorial');
+assert.equal(player.overlay.hidden,true);
+const returning=controls(player.storage);await returning.ui.afterFrame();assert.equal(returning.calls,0,'A remembered skip waits for the tutorial to start');
+returning.active=true;await returning.ui.afterFrame();assert.equal(returning.calls,1,'Remember the choice after reload');
+const otherPlayer=controls();otherPlayer.active=true;await otherPlayer.ui.afterFrame();assert.equal(otherPlayer.calls,0,'Other players start with a visible skip button');assert.equal(otherPlayer.overlay.hidden,false);
+
+const paused=controls();paused.active=true;paused.state.state='paused';
+paused.skipButton.click();await paused.ui.afterFrame();assert.equal(paused.calls,0);assert.equal(paused.overlay.hidden,true);
+paused.state.state='running';await paused.ui.afterFrame();assert.equal(paused.calls,0);
+const gone=controls();gone.active=true;await gone.ui.afterFrame();gone.skipButton.click();gone.active=false;
+await gone.ui.afterFrame();gone.active=true;await gone.ui.afterFrame();assert.equal(gone.calls,0,'Discard a click when its tutorial has already ended');
+const failed=controls();failed.active=true;failed.failure=true;failed.skipButton.click();
+await assert.rejects(failed.ui.afterFrame(),/Exit failed/);assert.equal(failed.skipButton.disabled,false);
+await failed.ui.afterFrame();assert.equal(failed.calls,1,'A failed exit is not retried automatically');
+assert.equal(failed.storage.getItem('orderup-skip-tutorial'),null,'Do not remember a failed skip');
+const blocked=controls({getItem(){throw Error('Blocked');},setItem(){throw Error('Blocked');}});blocked.active=true;blocked.skipButton.click();await blocked.ui.afterFrame();assert.equal(blocked.calls,1,'Storage failure does not prevent skipping');
+console.log('Tutorial visibility, one-shot clicks, remembered choice, input release, and frame serialization checks passed.');

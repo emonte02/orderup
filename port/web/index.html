@@ -11,7 +11,7 @@
 .activity-indicator{position:absolute;top:12px;right:12px;display:flex;align-items:center;gap:10px;padding:10px 14px;background:#151918ee;border-radius:8px;color:#f4f0df;font-size:14px;pointer-events:none}.loading-spinner{width:16px;height:16px;border:2px solid #454c40;border-top-color:#e7b556;border-radius:50%;animation:loading-turn 1s linear infinite}
 dialog{color:#f4f0df;background:#202724;border:1px solid #526052;border-radius:12px;padding:24px;max-width:min(620px,85vw);max-height:80vh}dialog::backdrop{background:#000a}dialog h2{margin:0 0 16px}#notice-body{white-space:pre-line;line-height:1.5}#notice-body ol{padding-left:22px}#notice-body li{margin:12px 0}#notice-body li p{margin:4px 0;font-size:14px}#notice-close{margin-top:18px}@keyframes loading-turn{to{transform:rotate(360deg)}}@keyframes loading-sweep{to{background-position:-200% 0}}@media(prefers-reduced-motion:reduce){.loading-spinner,.loading-meter progress:indeterminate{animation:none}.playing .viewport-controls,.loading-meter progress::-webkit-progress-value{transition:none}}@media(max-height:420px){.loading-card h1{margin-bottom:14px}.loading-meter{margin-top:14px}.loading-card .controls-hint{display:none}}
 .loading-panel{overflow-y:auto}.loading-card{margin:auto}
-.viewport-controls{display:flex;gap:8px;white-space:nowrap}.tutorial-overlay{position:fixed;right:max(12px,env(safe-area-inset-right));bottom:max(68px,env(safe-area-inset-bottom));z-index:3;max-width:calc(100vw - 24px);padding:12px;background:#202724ed;border:1px solid #69705c;border-radius:12px;box-shadow:0 2px 12px #0004}.tutorial-overlay button{width:100%;padding:10px 18px}.tutorial-overlay p{font-size:12px;color:#c3c7b9;margin:8px 0 0;text-align:center}
+.tutorial-overlay{position:fixed;right:max(12px,env(safe-area-inset-right));bottom:max(68px,env(safe-area-inset-bottom));z-index:3;max-width:calc(100vw - 24px)}.tutorial-overlay button{padding:10px 18px;box-shadow:0 2px 12px #0004}
 </style>
 <main>
  <p id="status" class="sr-only" role="status">Loading game files…</p>
@@ -32,8 +32,8 @@ dialog{color:#f4f0df;background:#202724;border:1px solid #526052;border-radius:1
   </section>
   <div id="activity-indicator" class="activity-indicator" hidden role="status"><span class="loading-spinner" aria-hidden="true"></span><span>Loading…</span></div>
  </div>
- <div class="viewport-controls"><button id="fullscreen" type="button" aria-label="Enter full screen" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 3H3v6m12-6h6v6M3 15v6h6m12-6v6h-6"/></svg><span id="fullscreen-label">Full screen</span></button><button id="tutorial-preference" type="button" aria-label="Automatically skip the introductory tutorial" aria-pressed="false" title="Remember whether to skip the introductory tutorial on this browser" disabled>Tutorial: play</button></div>
- <section id="tutorial-overlay" class="tutorial-overlay" aria-label="Tutorial controls" hidden><button id="skip-tutorial" type="button" aria-describedby="tutorial-hint">Skip tutorial</button><p id="tutorial-hint">Remember this choice on this browser.</p></section>
+ <div class="viewport-controls"><button id="fullscreen" type="button" aria-label="Enter full screen" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 3H3v6m12-6h6v6M3 15v6h6m12-6v6h-6"/></svg><span id="fullscreen-label">Full screen</span></button></div>
+ <section id="tutorial-overlay" class="tutorial-overlay" aria-label="Tutorial controls" hidden><button id="skip-tutorial" type="button">Skip Tutorial</button></section>
  <dialog id="notice"><h2 id="notice-title"></h2><div id="notice-body"></div><button id="notice-close">Continue</button></dialog>
 </main>
 <script type="module" src="./app.mjs"></script>
