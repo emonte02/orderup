@@ -1,67 +1,31 @@
-# Order Up!! To Go — browser port
+# Order Up!! To Go
 
-### [▶ Play in your browser](https://emonte02.github.io/orderup/?v=1c2b0ec763c099b0)
+Order Up!! To Go brought the fun and chaos of running a kitchen to iOS and Android. As phones moved on, the original 32-bit game was left behind. In April 2018, [EA confirmed that it no longer supported the game](https://web.archive.org/web/20220607195255/https://answers.ea.com/t5/Other-EA-Games/Will-Order-Up-To-Go-be-updated-to-64-bit/td-p/6314236).
 
-**Open the player. The game loads and starts automatically.** No APK selection, OBB selection, installation, or local server is needed.
+Like many fans, we weren't ready to hang up our aprons. This project is a labor of love: bringing a beloved piece of abandonware to the web so fans can step back into the kitchen and play again.
 
-The original 3D cooking game runs in desktop Chrome with mouse controls, audio, and saved progress. The first download is about **187 MB**. Verified game files are cached on this device and reused on later visits, including after player updates; only changed or damaged files download again. Keep the tab selected while the engine starts. The progress indicator distinguishes downloads from local files and reaches 100% when the game opens. Sound starts on your first tap or keypress if the browser blocks autoplay.
+We're fans doing this purely as a hobby. We are in no way affiliated with the game's publishers or developers.
 
-GitHub cannot run interactive games inside a repository README. The **Play** link opens the complete GitHub Pages player.
+## Play online
 
-## Controls
+Ready to get back in the kitchen? Play directly in your browser—just open the link below and let the game load.
 
-- **Click and drag** to use the original touch controls.
-- **Right-click or Escape** to go back or pause.
-- **Full Screen** expands the game to the display. On the world map, it matches the original Back button in the opposite corner. Escape exits full screen.
-- Choose **Continue** in the game to resume saved progress.
+**[Play Order Up!! To Go online](https://emonte02.github.io/orderup/)**
 
-Saves belong to the browser and site address. GitHub Pages and the local Mac launcher have separate saves. Clearing site data removes saved progress. See [PLAYING.md](PLAYING.md).
+## Run locally
 
-The optimized build reaches the menu in about **10–11 seconds** on the development M5 Max Mac once the game files are available. Measured restaurant kitchens average **38–49 fps**; performance checks include the tournament demonstration and its loading handoff. Original graphics, sound and game timing are retained. Results depend on the computer and browser; occasional asset-loading stalls remain. See the measured scene coverage in [the architecture notes](port/ARCHITECTURE.md). The coin store simulates gold-pack and double-silver purchases locally, with no payment processing. Retired ads, other purchases, and leaderboards are unavailable.
-
-## What this port contains
-
-The original APK was decompiled and analyzed to understand the engine's interfaces. The playable port executes the original ARM game engine inside a **WebAssembly emulator**, with JavaScript implementations of Android services, graphics, audio, input, and saves, plus C acceleration helpers. It is not a full rebuild of the original game from decompiled source.
-
-The source repository contains the new port code, compiled open-source emulator, tests, and build tools. The [game-data release](https://github.com/emonte02/orderup/releases/tag/game-data-1.65) supplies the executable, archives, initial game data, and achievement labels needed by the hosted build. These binary files remain outside Git source history. Personal saves, unrelated APKs, recovered analysis folders, and development reports are not published.
-
-The deployment downloads that release, verifies every file's size and SHA-256 hash, and includes the data in the website. Players only need the **Play** link above.
-
-## Run a checkout locally
-
-With Node.js 22+, Python 3, and the GitHub CLI installed:
+You'll need Git, Node.js 22 or newer, Python 3, and curl installed. Open a terminal and run these commands to clone the repo, download the game files, and start the player:
 
 ```sh
-gh release download game-data-1.65 --repo emonte02/orderup --pattern orderup-game-data-1.65.zip --dir _runtime
+git clone https://github.com/emonte02/orderup.git
+cd orderup
+mkdir -p _runtime
+curl -fL -o _runtime/orderup-game-data-1.65.zip https://github.com/emonte02/orderup/releases/download/game-data-1.65/orderup-game-data-1.65.zip
 python3 tools/package_game_data.py --extract _runtime/orderup-game-data-1.65.zip
 node tools/package_pages.mjs
 python3 -m http.server 8148 --bind 127.0.0.1 --directory _site
 ```
 
-Open **http://127.0.0.1:8148**; the game starts automatically. The release asset can also be downloaded from the release page and placed in `_runtime/`.
+Open [http://127.0.0.1:8148](http://127.0.0.1:8148) in Chrome to play. Keep the terminal open while playing; press **Ctrl+C** there to stop the player.
 
-On the original development Mac, **Play Order Up.command** still opens the existing local build at **http://127.0.0.1:8147**, using its existing files and saves.
-
-## Development
-
-- `port/web/`: player, automatic verified downloads, pointer input, and frame loop.
-- `port/runtime/`: ARM execution, Android services, graphics, audio, and persistence.
-- `port/src/`: C acceleration and archive helpers.
-- `port/build/`: the distributable emulator and its build record.
-- `port/game-data.json`: exact manifest of required runtime data.
-- `tools/package_game_data.py`: creates or verifies/extracts the data release.
-- `tools/package_pages.mjs`: packages the complete playable website.
-- `.github/workflows/pages.yml`: checks and publishes the player on pushes to `main`.
-
-Run the checks that need no original game data:
-
-```sh
-node port/tests/test_mouse.mjs
-node port/tests/test_downloads.mjs
-```
-
-`port/tests/test_pages_browser.mjs` checks the complete site in a fresh Chrome browser without local game files. Set `OU_PAGES_URL=https://emonte02.github.io/orderup/` to check the live site. It needs the dependencies in `tools/browser`; `CHROME_PATH` can override the Chrome executable path. The other preservation tests use the original local archives and analysis fixtures.
-
-To rebuild the emulator, install Emscripten and CMake, then run `python3 tools/build_emulator.py`. The script fetches pinned upstream source, applies the included patches, and records the bundle hash. The checked-in bundle lets you run and publish the player without that toolchain. See [third-party notices](port/THIRD_PARTY.md) for source revisions and licenses.
-
-GitHub Pages must use **GitHub Actions** as its publishing source. Only the assembled `_site/` is deployed. From the original development workspace, `python3 tools/package_game_data.py` regenerates the data release from the exact manifest inputs; it never reads personal browser saves.
+Next time, open a terminal in the `orderup` folder and run just the last command.
