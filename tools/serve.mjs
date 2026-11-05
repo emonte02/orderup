@@ -6,14 +6,14 @@ const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 export function createGameServer(){
  const routes=new Map([
   ['/', ['port/web/index.html','text/html']],['/app.mjs',['port/web/app.mjs','text/javascript']],['/mouse.mjs',['port/web/mouse.mjs','text/javascript']],['/loop.mjs',['port/web/loop.mjs','text/javascript']],
-  ['/downloads.mjs',['port/web/downloads.mjs','text/javascript']],
+  ['/downloads.mjs',['port/web/downloads.mjs','text/javascript']],['/tutorial.mjs',['port/web/tutorial.mjs','text/javascript']],
   ['/game/manifest.json',['port/game-data.json','application/json']],
   ['/unicorn.js',['port/build/unicorn-arm.js','text/javascript']],['/game/libOrderUp.so',['analysis/game-apk/lib/armeabi-v7a/libOrderUp.so','application/octet-stream']],
   ['/save/chefdata.wad',['analysis/game-apk/assets/chefdata.png','application/octet-stream']],['/save/chefmisc.wad',['analysis/game-apk/assets/chefmisc.png','application/octet-stream']],
   ['/game/ui.json',['analysis/game-platform-ui.json','application/json']],
   ['/game/orderup.apk',['originals/orderup-1.65.apk','application/octet-stream']],['/game/main.13.com.svsgames.orderup.obb',['originals/main.13.com.svsgames.orderup.obb','application/octet-stream']],['/game/patch.13.com.svsgames.orderup.obb',['originals/patch.13.com.svsgames.orderup.obb','application/octet-stream']],
  ]);
- for(const name of ['elf','memory','runtime','libc','threads','jni','graphics','graphics_batch','audio','persistence','optimizations'])routes.set('/runtime/'+name+'.mjs',['port/runtime/'+name+'.mjs','text/javascript']);
+ for(const name of ['elf','memory','runtime','libc','threads','jni','graphics','graphics_batch','audio','persistence','optimizations','tutorial'])routes.set('/runtime/'+name+'.mjs',['port/runtime/'+name+'.mjs','text/javascript']);
  return http.createServer((req,res)=>{
   const pathname=new URL(req.url,'http://localhost').pathname;if(pathname==='/health.json'){res.setHeader('Content-Type','application/json');res.end(JSON.stringify({application:'orderup-browser',version:1}));return;}const entry=routes.get(pathname);if(!entry){res.writeHead(404);res.end();return;}
   const p=path.join(root,entry[0]);if(!fs.existsSync(p)){res.writeHead(404);res.end('Required local build or game file is missing.');return;}

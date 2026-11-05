@@ -66,6 +66,10 @@ The diner end-of-day summary awarded 44 silver (11→55), followed by the origin
 
 ## Running and reproducing
 
+The browser's introductory tutorial overlay stores its opt-in preference in the separate `orderup-skip-tutorial` localStorage key. `web/tutorial.mjs` queues clicks for the frame loop; `runtime/tutorial.mjs` recognizes only the original Burger Face tutorial FSM. The skip uses native state transitions, temporary-assistant setup/cleanup, and the original end-of-day/save path. Tutorial-owned native timers are cancelled before scene teardown so delayed dialogue cannot notify a destroyed FSM. No prepared save or patched game asset is used. The preference is local to the browser/origin, as are the existing saves; there is no account synchronization. The toolbar can re-enable future tutorials without resetting current progress.
+
+`node port/tests/test_tutorial.mjs` checks preference isolation, storage failure, re-enabling, and serialized click handling. `node port/tests/test_tutorial_browser.mjs` exercises fresh-player skipping, original encrypted-save reload, automatic skipping on a new game, and skipping after the normal introduction. It requires the same local assets, Chrome, Playwright, and OCR helper as the other gameplay tests. Reports and screenshots go to `analysis/`.
+
 From the project root, `./port/play.sh` serves the local game at http://127.0.0.1:8147. Start it with the page's Start game button. Keep the same origin/port to retain browser saves.
 
 Useful checks:

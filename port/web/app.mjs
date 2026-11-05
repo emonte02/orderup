@@ -5,9 +5,11 @@ import {GameAudio} from './runtime/audio.mjs';
 import {GameGraphics} from './runtime/graphics.mjs';
 import {startFrameLoop} from './loop.mjs';
 import {bindMouse} from './mouse.mjs';
+import {createTutorialSkipper} from './runtime/tutorial.mjs';
+import {createTutorialControls} from './tutorial.mjs';
 const button=document.querySelector('#start'),status=document.querySelector('#status'),canvas=document.querySelector('canvas');
 const state=window.orderup={state:'loading',runtime:null,error:null,frames:0,timings:[],input:[],frameTimes:[],startRequested:false,startup:{started:performance.now(),phase:'files',files_loaded:0,bytes_loaded:0,bytes_total:0,phases:[]}};
-let toastTimer;
+let toastTimer,tutorialControls;
 const say=text=>{status.textContent=text;};
 const loadingPanel=document.querySelector('#loading-panel'),loadingTitle=document.querySelector('#loading-title'),loadingDetail=document.querySelector('#loading-detail'),loadingElapsed=document.querySelector('#loading-elapsed'),loadingProgress=document.querySelector('#loading-progress'),loadingAmount=document.querySelector('#loading-amount');let loadingTimer=null;
 function loadingPhase(phase){state.startup.phase=phase;state.startup.phases.push({phase,elapsed_ms:performance.now()-state.startup.started});updateLoading();}
@@ -57,7 +59,7 @@ async function showNotice(detail){
  if(detail.kind==='achievements'){
   const list=document.createElement('ol');for(const item of (data.achievements.length?data.achievements:Array.from({length:30},(_,i)=>({id:i+13,title:'Achievement '+(i+1),description:''})))){const li=document.createElement('li'),title=document.createElement('strong'),description=document.createElement('p');title.textContent=(detail.unlocked.includes(item.id)?'✓ ':'○ ')+item.title;description.textContent=item.description;li.append(title,description);list.append(li);}noticeBody.append(list);
  }else noticeBody.textContent=detail.message||'';
- if(!notice.open){resumeAfterNotice=state.state==='running';notice.showModal();noticeTitle.tabIndex=-1;noticeTitle.focus({preventScroll:true});notice.scrollTop=0;await state.controller?.pause();}
+ if(!notice.open){resumeAfterNotice=state.state==='running';tutorialControls?.hide();notice.showModal();noticeTitle.tabIndex=-1;noticeTitle.focus({preventScroll:true});notice.scrollTop=0;await state.controller?.pause();}
 }
 document.querySelector('#notice-close').addEventListener('click',()=>notice.close());
 notice.addEventListener('close',()=>{if(resumeAfterNotice&&!document.hidden)state.controller?.resume();});
@@ -77,8 +79,10 @@ async function start(){
   runtime.function('eglGetCurrentDisplay',()=>1);runtime.function('eglGetCurrentSurface',()=>1);runtime.function('eglSwapBuffers',()=>{graphics.present();return 1;});
   say('Starting the original game…');state.state='initializing';loadingPhase('initializers');await runtime.initialize();state.initializersCompleted=true;loadingPhase('game');await runtime.boot();state.bootCompleted=true;loadingPhase('menu');
   bindMouse(canvas,(...args)=>{const last=state.input.at(-1);if(args[1]===2&&last?.[1]===2)state.input[state.input.length-1]=args;else state.input.push(args);});state.state='running';say('Opening the game…');button.hidden=true;
-  state.flushSaves=()=>Promise.all(pendingSaves.splice(0));state.controller=startFrameLoop(state,runtime,{flushSaves:state.flushSaves,onFailure:failed});
-  document.addEventListener('visibilitychange',()=>{if(document.hidden||notice.open)state.controller.pause();else state.controller.resume();});
+  let storage;try{storage=globalThis.localStorage;}catch{}
+  tutorialControls=createTutorialControls({overlay:document.querySelector('#tutorial-overlay'),skipButton:document.querySelector('#skip-tutorial'),preferenceButton:document.querySelector('#tutorial-preference'),state,say,storage,tutorial:createTutorialSkipper(runtime)});
+  state.flushSaves=()=>Promise.all(pendingSaves.splice(0));state.controller=startFrameLoop(state,runtime,{flushSaves:state.flushSaves,afterFrame:context=>tutorialControls.afterFrame(context),onFailure:error=>{tutorialControls.hide();failed(error);}});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden||notice.open){tutorialControls.hide();state.controller.pause();}else state.controller.resume();});
   if(document.hidden)state.controller.pause();
  }catch(error){failed(error);}
 }
