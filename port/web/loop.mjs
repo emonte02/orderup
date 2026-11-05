@@ -1,7 +1,7 @@
 import {createTaskQueue} from './runtime/threads.mjs';
 import {floatBits} from './runtime/memory.mjs';
 /** Serialize original guest entry points and present only completed frames. */
-export function startFrameLoop(state,runtime,{audio=runtime.audio,flushSaves=async()=>{},onFailure=error=>{state.state='failed';state.error=String(error);console.error(error);}}={}){
+export function startFrameLoop(state,runtime,{audio=runtime.audio,flushSaves=async()=>{},afterStep=null,onFailure=error=>{state.state='failed';state.error=String(error);console.error(error);}}={}){
  const tasks=createTaskQueue();
  let nextFrame=performance.now(),timer=null,busy=false,waiters=[],paused=false,stopped=false,desiredPaused=false,transition=Promise.resolve();
  const cancelScheduled=()=>{if(timer?.task)tasks.cancel(timer.id);else clearTimeout(timer?.id);timer=null;};
@@ -13,7 +13,7 @@ export function startFrameLoop(state,runtime,{audio=runtime.audio,flushSaves=asy
   try{
    // A quick press and release must reach separate native updates.
    if(state.input.length)await touch(state.input.shift());
-   await runtime.call('Java_com_svsgames_orderup_OrderUpJNILib_step',[runtime.jniEnv,0],{timeoutMs:600000});runtime.graphics?.present();
+   await runtime.call('Java_com_svsgames_orderup_OrderUpJNILib_step',[runtime.jniEnv,0],{timeoutMs:600000});if(afterStep)await afterStep();runtime.graphics?.present();
    if(audio)await audio.pump(runtime);await runtime.pumpHostCallbacks?.();await flushSaves();
    state.frames++;state.timings.push(performance.now()-then);if(state.timings.length>300)state.timings.shift();state.frameTimes??=[];state.frameTimes.push(performance.now());if(state.frameTimes.length>300)state.frameTimes.shift();
    nextFrame=Math.max(nextFrame+1000/60,performance.now());

@@ -23,6 +23,8 @@ jobs:
           node-version: '22'
       - name: Check mouse controls
         run: node port/tests/test_mouse.mjs
+      - name: Check full-screen controls
+        run: node port/tests/test_fullscreen.mjs
       - name: Check automatic downloads
         run: node port/tests/test_downloads.mjs
       - name: Download game runtime data

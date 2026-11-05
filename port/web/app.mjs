@@ -6,6 +6,8 @@ import {GameGraphics} from './runtime/graphics.mjs';
 import {startFrameLoop} from './loop.mjs';
 import {bindMouse} from './mouse.mjs';
 import {showCoinStore} from './store.mjs';
+import {bindFullscreen} from './fullscreen.mjs';
+import {createNativeFullscreen} from './runtime/fullscreen.mjs';
 const button=document.querySelector('#start'),status=document.querySelector('#status'),canvas=document.querySelector('canvas');
 const state=window.orderup={state:'loading',runtime:null,error:null,frames:0,timings:[],input:[],frameTimes:[],startRequested:false,startup:{started:performance.now(),phase:'files',files_loaded:0,bytes_loaded:0,bytes_total:0,phases:[]}};
 let toastTimer;
@@ -18,14 +20,14 @@ function updateLoading(){
  if(state.frames>0){startup.ready_ms=performance.now()-(startup.play_requested??startup.started);startup.page_ready_ms=performance.now()-startup.started;loadingProgress.value=100;loadingAmount.textContent='100%';stopLoading();document.body.classList.add('playing');state.updateSound?.();say('Click and drag to play.');return;}
  const seconds=Math.floor((performance.now()-startup.started)/1000);loadingElapsed.textContent=seconds+' seconds elapsed';
  const percent=startup.phase==='files'?(startup.bytes_total?Math.floor(90*startup.bytes_loaded/startup.bytes_total):0):({engine:91,initializers:93,game:96,menu:99}[startup.phase]??90);
- loadingProgress.value=percent;loadingAmount.textContent=percent+'%';
+ loadingProgress.value=percent;loadingAmount.textContent=percent+'%';loadingPanel.dataset.stage=startup.phase==='files'?'files':startup.phase==='menu'?'ready':'preparing';
  if(startup.phase==='files'){
   const mb=bytes=>(bytes/1048576).toFixed(1),downloaded=startup.bytes_downloaded||0,cached=startup.bytes_cached||0;
-  loadingTitle.textContent=downloaded?'Downloading game files…':cached?'Loading saved game files…':'Checking saved game files…';
+  loadingTitle.textContent=downloaded?'Stocking the kitchen…':'Checking the pantry…';
   loadingDetail.textContent=downloaded&&cached?mb(downloaded)+' MB downloaded · '+mb(cached)+' MB from this device.':downloaded?mb(downloaded)+' of '+mb(startup.bytes_total)+' MB downloaded.':cached?mb(cached)+' of '+mb(startup.bytes_total)+' MB loaded from this device.':'The game will start automatically.';
   if(startup.cache_available===false&&downloaded)loadingDetail.textContent+=' Local caching is unavailable on this device.';
  }else{
-  loadingTitle.textContent=startup.phase==='menu'?'Opening the game…':'Preparing the game…';
+  loadingTitle.textContent=startup.phase==='menu'?'Order up!':'Warming up the kitchen…';
   loadingDetail.textContent=document.hidden?'Return to this tab to finish loading.':'Starting the game automatically. Keep this tab open.';
  }
 }
@@ -43,10 +45,8 @@ async function preload(){
  catch(error){failed(error);return null;}
 }
 const fullscreenButton=document.querySelector('#fullscreen'),fullscreenLabel=document.querySelector('#fullscreen-label');
-function updateFullscreen(){const active=!!document.fullscreenElement;fullscreenButton.setAttribute('aria-pressed',String(active));fullscreenButton.setAttribute('aria-label',active?'Exit full screen':'Enter full screen');fullscreenLabel.textContent=active?'Exit full screen':'Full screen';}
-fullscreenButton.hidden=!document.fullscreenEnabled;
-fullscreenButton.addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{say('Full screen is unavailable in this browser. The game still fills the window.');}});
-document.addEventListener('fullscreenchange',updateFullscreen);
+const fullscreen=state.fullscreen=bindFullscreen(canvas,fullscreenButton,fullscreenLabel,{onUnavailable:()=>{say('Full screen is unavailable in this browser. The game still fills the window.');status.classList.add('toast');clearTimeout(toastTimer);toastTimer=setTimeout(()=>status.classList.remove('toast'),4000);}});
+
 const activityIndicator=document.querySelector('#activity-indicator');
 const notice=document.querySelector('#notice'),noticeTitle=document.querySelector('#notice-title'),noticeBody=document.querySelector('#notice-body');let resumeAfterNotice=false;
 const uiData=fetch(new URL('./game/ui.json',import.meta.url)).then(r=>r.ok?r.json():{achievements:[]}).catch(()=>({achievements:[]}));
@@ -84,10 +84,11 @@ async function start(){
   runtime.function('eglGetCurrentDisplay',()=>1);runtime.function('eglGetCurrentSurface',()=>1);runtime.function('eglSwapBuffers',()=>{graphics.present();return 1;});
   say('Starting the original game…');state.state='initializing';loadingPhase('initializers');await runtime.initialize();state.initializersCompleted=true;loadingPhase('game');await runtime.boot();state.bootCompleted=true;loadingPhase('menu');
   bindMouse(canvas,(...args)=>{const last=state.input.at(-1);if(args[1]===2&&last?.[1]===2)state.input[state.input.length-1]=args;else state.input.push(args);});state.state='running';say('Opening the game…');button.hidden=true;
-  state.flushSaves=()=>Promise.all(pendingSaves.splice(0));state.controller=startFrameLoop(state,runtime,{flushSaves:state.flushSaves,onFailure:failed});
+  const nativeFullscreen=createNativeFullscreen(runtime,{enabled:fullscreen.enabled,label:fullscreen.label,pressed:fullscreen.pressed,onBounds:bounds=>fullscreen.setBounds(bounds)});
+  state.flushSaves=()=>Promise.all(pendingSaves.splice(0));state.controller=startFrameLoop(state,runtime,{flushSaves:state.flushSaves,onFailure:failed,afterStep:()=>nativeFullscreen.update()});
   document.addEventListener('visibilitychange',()=>{if(document.hidden||notice.open)state.controller.pause();else state.controller.resume();});
   if(document.hidden)state.controller.pause();
  }catch(error){failed(error);}
 }
-function failed(error){stopLoading();activityIndicator.hidden=true;state.state='failed';state.error=String(error);console.error(error);state.report=state.runtime?.report();say(state.bootCompleted?'The game stopped. Reload to return to your latest save.':'The game could not finish loading. Reload to retry.');loadingTitle.textContent='Unable to load the game';loadingDetail.textContent=status.textContent;loadingProgress.hidden=true;loadingAmount.textContent='';loadingElapsed.textContent='';loadingPanel.hidden=false;button.hidden=false;button.textContent='Reload to retry';button.disabled=false;button.onclick=()=>location.reload();}
+function failed(error){stopLoading();document.body.classList.remove('playing');loadingPanel.dataset.stage='error';fullscreen.setBounds(null);activityIndicator.hidden=true;state.state='failed';state.error=String(error);console.error(error);state.report=state.runtime?.report();say(state.bootCompleted?'The game stopped. Reload to return to your latest save.':'The game could not finish loading. Reload to retry.');loadingTitle.textContent='Unable to load the game';loadingDetail.textContent=status.textContent;loadingProgress.hidden=true;loadingAmount.textContent='';loadingElapsed.textContent='';loadingPanel.hidden=false;button.hidden=false;button.textContent='Reload to retry';button.disabled=false;button.onclick=()=>location.reload();}
 loadingTimer=setInterval(updateLoading,250);updateLoading();const assetsReady=preload();start();

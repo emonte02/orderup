@@ -18,7 +18,7 @@ try{
    if(!name.startsWith('/orderup/')){res.writeHead(404);res.end();return;}
    const file=path.resolve(site,name.slice('/orderup/'.length)||'index.html');
    if(!file.startsWith(site+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile()){res.writeHead(404);res.end();return;}
-   const type=file.endsWith('.html')?'text/html':file.endsWith('.mjs')||file.endsWith('.js')?'text/javascript':'application/octet-stream';
+   const type=file.endsWith('.html')?'text/html':file.endsWith('.css')?'text/css':file.endsWith('.png')?'image/png':file.endsWith('.mjs')||file.endsWith('.js')?'text/javascript':'application/octet-stream';
    res.setHeader('Content-Type',type);fs.createReadStream(file).pipe(res);
   });
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));url='http://127.0.0.1:'+server.address().port+'/orderup/';
@@ -32,6 +32,8 @@ try{
  await page.goto(url,{waitUntil:'domcontentloaded'});
  assert.equal(await page.locator('input[type="file"]').count(),0,'The hosted game must never request local files');
  assert.equal(await page.locator('#start').isVisible(),false,'Startup must not require a click');
+ await page.waitForFunction(()=>[...document.querySelectorAll('.loading-art img')].every(image=>image.complete&&image.naturalWidth>0));
+ assert.equal(await page.locator('.loading-layout').evaluate(element=>getComputedStyle(element).display),'grid','The packaged loading stylesheet must be applied');
  console.log('Starting the complete hosted game in a fresh browser at '+url);
  await page.waitForFunction(()=>orderup.state==='failed'||orderup.frames>=60,null,{timeout:600000});
  assert.equal(await page.evaluate(()=>orderup.error),null);
