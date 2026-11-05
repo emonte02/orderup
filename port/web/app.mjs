@@ -44,11 +44,6 @@ async function preload(){
  try{const [data,emulator]=await Promise.all([loadGameFiles(),loadEmulator().then(()=>globalThis.MUnicorn())]);state.startup.assets_ready=true;if(!state.startRequested){state.state='ready';loadingPhase('ready');say('Game files loaded. Start game when you are ready.');}return{data,emulator};}
  catch(error){failed(error);return null;}
 }
-const fullscreenButton=document.querySelector('#fullscreen'),fullscreenLabel=document.querySelector('#fullscreen-label');
-function updateFullscreen(){const active=!!document.fullscreenElement;fullscreenButton.setAttribute('aria-pressed',String(active));fullscreenButton.setAttribute('aria-label',active?'Exit full screen':'Enter full screen');fullscreenLabel.textContent=active?'Exit full screen':'Full screen';}
-fullscreenButton.hidden=!document.fullscreenEnabled;
-fullscreenButton.addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{say('Full screen is unavailable in this browser. The game still fills the window.');}});
-document.addEventListener('fullscreenchange',updateFullscreen);
 const activityIndicator=document.querySelector('#activity-indicator');
 const notice=document.querySelector('#notice'),noticeTitle=document.querySelector('#notice-title'),noticeBody=document.querySelector('#notice-body');let resumeAfterNotice=false;
 const uiData=fetch(new URL('./game/ui.json',import.meta.url)).then(r=>r.ok?r.json():{achievements:[]}).catch(()=>({achievements:[]}));

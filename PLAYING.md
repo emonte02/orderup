@@ -4,7 +4,7 @@
 
 Use desktop Chrome. Open the link and click **Start game**. All game files download automatically; you do not need to provide an APK or OBB. The first download is about 187 MB, and the progress bar shows how much has loaded.
 
-Keep the tab selected during startup. The optimized build reaches the menu in about 10–11 seconds on the development Mac once the game files are available. First-time downloading adds time according to your connection. The game fills the browser window; **Full screen** hides browser controls.
+Keep the tab selected during startup. The optimized build reaches the menu in about 10–11 seconds on the development Mac once the game files are available. First-time downloading adds time according to your connection. The game fills the browser window.
 
 Click and drag with the left mouse button. Right-click or press Escape to go back or pause. The original tutorial teaches cooking gestures. Use a quick mouse flick for the Ravioli cutter’s arrow prompt. To plate food from an oven or assistant icon, select the ready food first, then click the plate button.
 

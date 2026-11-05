@@ -43,7 +43,7 @@ try{
  const download=await page.evaluate(()=>({bytes:orderup.startup.bytes_loaded,total:orderup.startup.bytes_total,files:orderup.startup.files_loaded}));
  assert.deepEqual(download,{bytes:expectedBytes,total:expectedBytes,files:6});
  await page.locator('#loading-panel').waitFor({state:'hidden'});
- await page.click('#fullscreen');await page.waitForFunction(()=>!!document.fullscreenElement);await page.click('#fullscreen');await page.waitForFunction(()=>!document.fullscreenElement);
+ assert.equal(await page.locator('#fullscreen').count(),0,'The player has no Full screen button');
  const box=await page.locator('canvas').boundingBox();await page.mouse.move(box.x+box.width*.25,box.y+box.height*.5);await page.mouse.down();await page.mouse.move(box.x+box.width*.5,box.y+box.height*.5);await page.mouse.up();
  const input=await page.evaluate(()=>orderup.input.splice(0));assert.deepEqual(input.map(e=>e[1]),[0,2,1]);
  assert.deepEqual(errors,[]);assert.deepEqual(badResponses,[]);
@@ -54,6 +54,6 @@ try{
  const stem=process.env.OU_PAGES_URL?'pages-live':'pages-local';
  await page.screenshot({path:path.join(root,'analysis',stem+'.png')});
  const buildResponse=await page.request.get(new URL('build.json',resourceBase).href);assert.equal(buildResponse.ok(),true);const build=await buildResponse.json();const scriptRequests=requests.filter(req=>{const p=new URL(req.url).pathname;return p.endsWith('.mjs')||p.endsWith('/unicorn.js');});assert(scriptRequests.length>10);assert(scriptRequests.every(req=>new URL(req.url).searchParams.get('v')===build.version),'Every module and the engine must bypass an older cached build');
- Object.assign(report,{url,build,all_player_modules_versioned:true,automatic_downloads:download,no_local_files_required:true,fresh_browser_boot:true,fullscreen:true,mouse_drag:true,no_uploads:true,page_errors:errors,network_errors:badResponses});
+ Object.assign(report,{url,build,all_player_modules_versioned:true,automatic_downloads:download,no_local_files_required:true,fresh_browser_boot:true,no_fullscreen_button:true,mouse_drag:true,no_uploads:true,page_errors:errors,network_errors:badResponses});
  fs.writeFileSync(path.join(root,'analysis',stem+'.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report,null,2));
 }finally{await browser?.close();if(server)await new Promise(resolve=>server.close(resolve));}
