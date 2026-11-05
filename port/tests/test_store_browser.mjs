@@ -66,7 +66,7 @@ try{
  assert.equal(invalid,true);assert.deepEqual(await balances(),saved);
  await page.evaluate(()=>orderup.flushSaves());
  // Reload before resuming gameplay: the purchase callback itself must save.
- await page.reload();await page.click('#start');await page.waitForFunction(()=>orderup.error||orderup.frames>=30,null,{timeout:600000});assert.equal(await page.evaluate(()=>orderup.error),null);
+ await page.reload();await page.waitForFunction(()=>orderup.error||orderup.frames>=30,null,{timeout:600000});assert.equal(await page.evaluate(()=>orderup.error),null);
  await page.evaluate(()=>orderup.controller.pause());await continueGame();
  const restored=await balances();assert.equal(restored.gold,expectedGold);assert.equal(restored.silver,before.silver);assert.equal(restored.permanent,true);assert.equal(restored.doubleSilver,saved.doubleSilver);
  await openStore(false);assert.equal(await page.locator('[data-product]:disabled').count(),3);await closeStore();

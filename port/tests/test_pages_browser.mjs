@@ -31,9 +31,7 @@ try{
  const resourceBase=new URL('.',url).href;
  await page.goto(url,{waitUntil:'domcontentloaded'});
  assert.equal(await page.locator('input[type="file"]').count(),0,'The hosted game must never request local files');
- await page.locator('#start').waitFor({state:'visible'});
- // Start during automatic downloading, just as a new visitor can.
- await page.click('#start');
+ assert.equal(await page.locator('#start').isVisible(),false,'Startup must not require a click');
  console.log('Starting the complete hosted game in a fresh browser at '+url);
  await page.waitForFunction(()=>orderup.state==='failed'||orderup.frames>=60,null,{timeout:600000});
  assert.equal(await page.evaluate(()=>orderup.error),null);

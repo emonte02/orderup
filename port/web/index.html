@@ -11,21 +11,22 @@
 .activity-indicator{position:absolute;top:12px;right:12px;display:flex;align-items:center;gap:10px;padding:10px 14px;background:#151918ee;border-radius:8px;color:#f4f0df;font-size:14px;pointer-events:none}.loading-spinner{width:16px;height:16px;border:2px solid #454c40;border-top-color:#e7b556;border-radius:50%;animation:loading-turn 1s linear infinite}
 dialog{color:#f4f0df;background:#202724;border:1px solid #526052;border-radius:12px;padding:24px;max-width:min(620px,85vw);max-height:80vh}dialog::backdrop{background:#000a}dialog h2{margin:0 0 16px}#notice-body{white-space:pre-line;line-height:1.5}#notice-body ol{padding-left:22px}#notice-body li{margin:12px 0}#notice-body li p{margin:4px 0;font-size:14px}#notice-close{margin-top:18px}@keyframes loading-turn{to{transform:rotate(360deg)}}@keyframes loading-sweep{to{background-position:-200% 0}}@media(prefers-reduced-motion:reduce){.loading-spinner,.loading-meter progress:indeterminate{animation:none}.playing .viewport-controls,.loading-meter progress::-webkit-progress-value{transition:none}}@media(max-height:420px){.loading-card h1{margin-bottom:14px}.loading-meter{margin-top:14px}.loading-card .controls-hint{display:none}}
 .loading-panel{overflow-y:auto}.loading-card{margin:auto}
+.viewport-controls{display:flex;align-items:center;gap:12px;width:max-content;max-width:calc(100vw - 24px)}
 </style>
 <main>
- <p id="status" class="sr-only" role="status">Loading game files…</p>
+ <p id="status" class="sr-only" role="status">Checking saved game files…</p>
  <div class="game-surface">
   <canvas width="960" height="640" aria-label="Order Up game"></canvas>
   <section id="loading-panel" class="loading-panel" aria-labelledby="loading-title">
    <div class="loading-card">
     <h1>Order Up!! To Go</h1>
-    <h2 id="loading-title">Loading game files…</h2>
-    <p id="loading-detail">Getting your game ready.</p>
+    <h2 id="loading-title">Checking saved game files…</h2>
+    <p id="loading-detail">The game will start automatically.</p>
     <div id="loading-meter" class="loading-meter">
      <progress id="loading-progress" max="100" value="0" aria-labelledby="loading-title"></progress>
      <div class="loading-meta"><span id="loading-amount">0%</span><span id="loading-elapsed">0 seconds elapsed</span></div>
     </div>
-    <button id="start">Start game</button>
+    <button id="start" hidden>Reload to retry</button>
     <p class="controls-hint">Click and drag to cook. Right-click or press Esc to go back.<br>Progress saves on this computer.</p>
    </div>
   </section>

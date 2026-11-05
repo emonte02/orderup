@@ -15,19 +15,18 @@ function loadingPhase(phase){state.startup.phase=phase;state.startup.phases.push
 function updateLoading(){
  if(state.error)return;
  const startup=state.startup;
- if(state.frames>0){startup.ready_ms=performance.now()-(startup.play_requested??startup.started);startup.page_ready_ms=performance.now()-startup.started;stopLoading();document.body.classList.add('playing');say('Click and drag to play.');return;}
- const seconds=Math.floor((performance.now()-(startup.play_requested??startup.started))/1000);loadingElapsed.textContent=seconds+' seconds elapsed';
+ if(state.frames>0){startup.ready_ms=performance.now()-(startup.play_requested??startup.started);startup.page_ready_ms=performance.now()-startup.started;loadingProgress.value=100;loadingAmount.textContent='100%';stopLoading();document.body.classList.add('playing');state.updateSound?.();say('Click and drag to play.');return;}
+ const seconds=Math.floor((performance.now()-startup.started)/1000);loadingElapsed.textContent=seconds+' seconds elapsed';
+ const percent=startup.phase==='files'?(startup.bytes_total?Math.floor(90*startup.bytes_loaded/startup.bytes_total):0):({engine:91,initializers:93,game:96,menu:99}[startup.phase]??90);
+ loadingProgress.value=percent;loadingAmount.textContent=percent+'%';
  if(startup.phase==='files'){
-  loadingTitle.textContent='Loading game files…';
-  loadingDetail.textContent=startup.bytes_total?(startup.bytes_loaded/1048576).toFixed(1)+' of '+(startup.bytes_total/1048576).toFixed(1)+' MB loaded.':'Getting your game ready.';
-  if(startup.bytes_total){const percent=Math.min(100,Math.floor(startup.bytes_loaded/startup.bytes_total*100));loadingProgress.value=percent;loadingAmount.textContent=percent+'%';}
-  else{loadingProgress.removeAttribute('value');loadingAmount.textContent='Loading…';}
- }else if(startup.phase==='ready'){
-  loadingProgress.value=100;loadingAmount.textContent='100%';loadingTitle.textContent='Ready to start';loadingDetail.textContent='Click Start game to play with sound.';loadingElapsed.textContent='Game files loaded';
+  const mb=bytes=>(bytes/1048576).toFixed(1),downloaded=startup.bytes_downloaded||0,cached=startup.bytes_cached||0;
+  loadingTitle.textContent=downloaded?'Downloading game files…':cached?'Loading saved game files…':'Checking saved game files…';
+  loadingDetail.textContent=downloaded&&cached?mb(downloaded)+' MB downloaded · '+mb(cached)+' MB from this device.':downloaded?mb(downloaded)+' of '+mb(startup.bytes_total)+' MB downloaded.':cached?mb(cached)+' of '+mb(startup.bytes_total)+' MB loaded from this device.':'The game will start automatically.';
+  if(startup.cache_available===false&&downloaded)loadingDetail.textContent+=' Local caching is unavailable on this device.';
  }else{
-  loadingProgress.removeAttribute('value');loadingAmount.textContent='Preparing…';
   loadingTitle.textContent=startup.phase==='menu'?'Opening the game…':'Preparing the game…';
-  loadingDetail.textContent=document.hidden?'Return to this tab to finish loading.':'Starting the game. Keep this tab open.';
+  loadingDetail.textContent=document.hidden?'Return to this tab to finish loading.':'Starting the game automatically. Keep this tab open.';
  }
 }
 function stopLoading(){clearInterval(loadingTimer);loadingTimer=null;loadingPanel.hidden=true;}
@@ -37,10 +36,10 @@ function loadEmulator(){
 }
 const paths=gamePaths;
 function loadGameFiles(){
- return loadHostedGameFiles({onProgress:({loaded,total,files})=>{state.startup.bytes_loaded=loaded;state.startup.bytes_total=total;state.startup.files_loaded=files;updateLoading();}});
+ return loadHostedGameFiles({onProgress:({loaded,total,files,downloaded,cached,cacheAvailable})=>{Object.assign(state.startup,{bytes_loaded:loaded,bytes_total:total,files_loaded:files,bytes_downloaded:downloaded,bytes_cached:cached,cache_available:cacheAvailable});updateLoading();}});
 }
 async function preload(){
- try{const [data,emulator]=await Promise.all([loadGameFiles(),loadEmulator().then(()=>globalThis.MUnicorn())]);state.startup.assets_ready=true;if(!state.startRequested){state.state='ready';loadingPhase('ready');say('Game files loaded. Start game when you are ready.');}return{data,emulator};}
+ try{const [data,emulator]=await Promise.all([loadGameFiles(),loadEmulator().then(()=>globalThis.MUnicorn())]);state.startup.assets_ready=true;return{data,emulator};}
  catch(error){failed(error);return null;}
 }
 const fullscreenButton=document.querySelector('#fullscreen'),fullscreenLabel=document.querySelector('#fullscreen-label');
@@ -65,9 +64,15 @@ document.querySelector('#notice-close').addEventListener('click',()=>notice.clos
 notice.addEventListener('close',()=>{if(resumeAfterNotice&&!document.hidden)state.controller?.resume();});
 
 async function start(){
- if(state.error)return;state.startRequested=true;state.startup.play_requested=performance.now();button.disabled=true;button.textContent='Loading…';
+ if(state.error||state.startRequested)return;state.startRequested=true;state.startup.play_requested=performance.now();button.hidden=true;
  try{
-  const audioContext=new AudioContext();await audioContext.resume();
+  const audioContext=new AudioContext(),sound=document.createElement('button');
+  sound.id='sound';sound.type='button';sound.hidden=true;sound.textContent='Enable sound';document.querySelector('.viewport-controls').prepend(sound);
+  // Autoplay permission gates sound only, never startup or the frame controller.
+  const unlockAudio=()=>{if(!document.hidden&&!['paused','pausing','failed'].includes(state.state)&&audioContext.state!=='running')audioContext.resume().catch(()=>{});};
+  state.updateSound=()=>{state.audioUnlocked||=audioContext.state==='running';sound.hidden=!!state.audioUnlocked||!state.frames||!!state.error;};
+  for(const event of ['pointerdown','pointerup','touchend','keydown'])document.addEventListener(event,unlockAudio,{capture:true,passive:true});
+  sound.addEventListener('click',unlockAudio);audioContext.addEventListener('statechange',state.updateSound);unlockAudio();
   const assets=await assetsReady;if(!assets)return;const {data,emulator}=assets;
   const files=new Map(paths.slice(1).map((p,i)=>[p,{data:data[i+1],writable:false}]));
   const saves=await openSaves(),pendingSaves=[];for(const [p,file] of saves.files)files.set(p,file);
@@ -85,5 +90,4 @@ async function start(){
  }catch(error){failed(error);}
 }
 function failed(error){stopLoading();activityIndicator.hidden=true;state.state='failed';state.error=String(error);console.error(error);state.report=state.runtime?.report();say(state.bootCompleted?'The game stopped. Reload to return to your latest save.':'The game could not finish loading. Reload to retry.');loadingTitle.textContent='Unable to load the game';loadingDetail.textContent=status.textContent;loadingProgress.hidden=true;loadingAmount.textContent='';loadingElapsed.textContent='';loadingPanel.hidden=false;button.hidden=false;button.textContent='Reload to retry';button.disabled=false;button.onclick=()=>location.reload();}
-button.addEventListener('click',start,{once:true});
-loadingTimer=setInterval(updateLoading,250);updateLoading();const assetsReady=preload();
+loadingTimer=setInterval(updateLoading,250);updateLoading();const assetsReady=preload();start();

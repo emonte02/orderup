@@ -2,9 +2,9 @@
 
 ### [▶ Play in your browser](https://emonte02.github.io/orderup/?v=1c2b0ec763c099b0)
 
-**Open the player and click Start game. Everything needed downloads automatically.** No APK selection, OBB selection, installation, or local server is needed.
+**Open the player. The game loads and starts automatically.** No APK selection, OBB selection, installation, or local server is needed.
 
-The original 3D cooking game runs in desktop Chrome with mouse controls, audio, and saved progress. The first download is about **187 MB**. Keep the tab selected while the engine starts. The progress indicator shows download and startup stages.
+The original 3D cooking game runs in desktop Chrome with mouse controls, audio, and saved progress. The first download is about **187 MB**. Verified game files are cached on this device and reused on later visits, including after player updates; only changed or damaged files download again. Keep the tab selected while the engine starts. The progress indicator distinguishes downloads from local files and reaches 100% when the game opens. Sound starts on your first tap or keypress if the browser blocks autoplay.
 
 GitHub cannot run interactive games inside a repository README. The **Play** link opens the complete GitHub Pages player.
 
@@ -38,7 +38,7 @@ node tools/package_pages.mjs
 python3 -m http.server 8148 --bind 127.0.0.1 --directory _site
 ```
 
-Open **http://127.0.0.1:8148** and click **Start game**. The release asset can also be downloaded from the release page and placed in `_runtime/`.
+Open **http://127.0.0.1:8148**; the game starts automatically. The release asset can also be downloaded from the release page and placed in `_runtime/`.
 
 On the original development Mac, **Play Order Up.command** still opens the existing local build at **http://127.0.0.1:8147**, using its existing files and saves.
 

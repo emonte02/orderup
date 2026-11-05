@@ -28,7 +28,7 @@ export async function createGameSession(){
    if(typeof fixture.preferences?.['orderup-browser-preferences']==='string')for(const [key,value] of Object.entries(fixture.preferences))localStorage.setItem(key,value);
    else localStorage.setItem('orderup-browser-preferences',JSON.stringify(fixture.preferences));
   },fixture);}
-  await page.click('#start');await page.waitForFunction(()=>orderup.state==='failed'||orderup.frames>=30,null,{timeout:600000});
+  await page.waitForFunction(()=>orderup.state==='failed'||orderup.frames>=30,null,{timeout:600000});
   const error=await page.evaluate(()=>orderup.error);if(error)throw Error(error);await page.evaluate(()=>orderup.controller.pause());return page;
  },async close(){await browser.close();await new Promise(resolve=>server.close(resolve));}};
 }

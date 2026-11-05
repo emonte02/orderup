@@ -66,7 +66,7 @@ The diner end-of-day summary awarded 44 silver (11→55), followed by the origin
 
 ## Running and reproducing
 
-From the project root, `./port/play.sh` serves the local game at http://127.0.0.1:8147. Start it with the page's Start game button. Keep the same origin/port to retain browser saves.
+From the project root, `./port/play.sh` serves the local game at http://127.0.0.1:8147. It starts automatically after loading and preparation. Keep the same origin/port to retain browser saves.
 
 Useful checks:
 
@@ -131,3 +131,5 @@ An independent requestAnimationFrame audit observed every completed frame in the
 The release also passed mouse cooking with native prepared/plated flags, a fresh original encrypted-save reload, automatic-download progress, three viewport layouts, full-screen entry/exit and mouse coordinates, and fresh packaged-site boot under `/orderup/`. All 20 native equivalence/runtime test groups passed. A final source-whitespace cleanup changed only the WASM debug name section; all executable sections and the surrounding JavaScript were byte-identical to the fully tested candidate.
 
 This performance matrix covers all five restaurant kitchens and the tournament demonstration/handoff. Title/menu navigation, world-map/front screens, minigames, end-of-day screens, and tournament rewards have functional coverage described above, but do not have separate release FPS measurements. An exhaustive campaign, every possible recipe combination, different computers, other browser engines, and battery/thermal states are not certified by these measurements. The local raw reports and scene screenshots are retained in `analysis/performance-release*`; personal saves and QA controls are excluded from the hosted player.
+
+Game assets use the `orderup-game-assets-v1` Cache Storage cache, keyed by project URL and manifest SHA-256, independently of player build versions and encrypted saves. Cached bytes are verified before use; changed, missing, or corrupt files are downloaded and verified before caching. Cache denial/quota errors fall back to normal downloads. The small manifest is revalidated on each visit. Startup never waits for autoplay permission: sound is unlocked by the first interaction, and the progress bar reserves completion for the first game frame. `test_downloads.mjs` covers cache failure/update paths; `test_cache_browser.mjs` checks cold/warm startup across browser restarts with HTTP caching disabled.

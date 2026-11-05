@@ -14,7 +14,7 @@ try{
  await page.waitForFunction(()=>window.orderup?.startup.bytes_loaded>0&&orderup.startup.bytes_loaded<orderup.startup.bytes_total,null,{timeout:120000});
  await page.waitForFunction(()=>{const p=document.querySelector('#loading-progress');return p.value>0&&p.value<100;});
  const partial=await page.evaluate(()=>({value:document.querySelector('#loading-progress').value,bytes_loaded:orderup.startup.bytes_loaded,bytes_total:orderup.startup.bytes_total,start_requested:orderup.startRequested,runtime:!!orderup.runtime}));
- assert.equal(partial.start_requested,false);assert.equal(partial.runtime,false);assert(partial.value>0&&partial.value<100);
+ assert.equal(partial.start_requested,true);assert.equal(partial.runtime,false);assert(partial.value>0&&partial.value<100);
  await page.screenshot({path:artifact('loading-download-browser.png').pathname});
  const layouts=[];
  async function checkLayout(label){const layout=await page.evaluate(()=>{const r=document.querySelector('canvas').getBoundingClientRect();return{viewport:[innerWidth,innerHeight],canvas:[r.x,r.y,r.width,r.height],scroll:[document.documentElement.scrollWidth,document.documentElement.scrollHeight]};});const[w,h]=layout.viewport,[x,y,cw,ch]=layout.canvas;assert(Math.abs(cw/ch-1.5)<0.001);assert(cw<=w+1&&ch<=h+1&&x>=-1&&y>=-1);assert(Math.abs(cw-w)<1||Math.abs(ch-h)<1);assert(layout.scroll[0]<=w&&layout.scroll[1]<=h);layouts.push({label,...layout});return layout;}
@@ -22,12 +22,11 @@ try{
  await page.setViewportSize({width:1100,height:850});
  await page.click('#fullscreen');await page.waitForFunction(()=>document.fullscreenElement===document.documentElement&&document.querySelector('#fullscreen').getAttribute('aria-pressed')==='true');assert.equal(await page.locator('#fullscreen').getAttribute('aria-pressed'),'true');await checkLayout('full-screen');
  await page.click('#fullscreen');await page.waitForFunction(()=>!document.fullscreenElement&&document.querySelector('#fullscreen').getAttribute('aria-pressed')==='false');assert.equal(await page.locator('#fullscreen').getAttribute('aria-pressed'),'false');
- await page.waitForFunction(()=>orderup.state==='failed'||orderup.state==='ready',null,{timeout:120000});assert.equal(await page.evaluate(()=>orderup.error),null);
- assert.equal(await page.locator('#loading-progress').getAttribute('value'),'100');assert.equal(await page.evaluate(()=>!!orderup.runtime),false);
+ await page.waitForFunction(()=>orderup.state==='failed'||orderup.state==='initializing',null,{timeout:120000});assert.equal(await page.evaluate(()=>orderup.error),null);
+ const progress=Number(await page.locator('#loading-progress').getAttribute('value'));assert(progress>=90&&progress<100,'File completion must not claim game readiness');
  const download=await page.evaluate(()=>({bytes_loaded:orderup.startup.bytes_loaded,bytes_total:orderup.startup.bytes_total,files_loaded:orderup.startup.files_loaded}));assert.equal(download.bytes_loaded,download.bytes_total);assert.equal(download.files_loaded,6);
  await network.send('Network.emulateNetworkConditions',{offline:false,latency:0,downloadThroughput:-1,uploadThroughput:-1});
- await page.click('#start');await page.waitForFunction(()=>orderup.state==='failed'||orderup.state==='initializing',null,{timeout:120000});assert.equal(await page.evaluate(()=>orderup.error),null);
- assert.equal(await page.locator('#loading-progress').getAttribute('value'),null);assert((await page.locator('#loading-detail').textContent()).includes('Starting the game'));assert((await page.locator('#loading-elapsed').textContent()).includes('elapsed'));
+ assert((await page.locator('#loading-detail').textContent()).includes('Starting the game'));assert((await page.locator('#loading-elapsed').textContent()).includes('elapsed'));
  await page.screenshot({path:artifact('loading-progress-browser.png').pathname});
  await page.waitForFunction(()=>orderup.state==='failed'||orderup.frames>5,null,{timeout:600000});await page.locator('#loading-panel').waitFor({state:'hidden'});assert.equal(await page.evaluate(()=>orderup.error),null);assert.equal(await page.locator('#start').isVisible(),false);
  await page.evaluate(()=>orderup.controller.pause());const frames=await page.evaluate(()=>orderup.frames);

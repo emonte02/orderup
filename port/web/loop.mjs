@@ -32,7 +32,7 @@ export function startFrameLoop(state,runtime,{audio=runtime.audio,flushSaves=asy
     if(audio)await audio.context.suspend();state.state='paused';
    }else{
     if(state.state==='running')return;
-    runtime.resumeClock();if(audio)await audio.context.resume();await runtime.call('Java_com_svsgames_orderup_OrderUpJNILib_resume',[runtime.jniEnv,0]);
+    runtime.resumeClock();if(audio)audio.context.resume().catch(()=>{});await runtime.call('Java_com_svsgames_orderup_OrderUpJNILib_resume',[runtime.jniEnv,0]);
     paused=false;state.state='running';nextFrame=performance.now();schedule();
    }
   }).catch(onFailure);return transition;
