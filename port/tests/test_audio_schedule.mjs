@@ -1,0 +1,12 @@
+/** Original PCM remains continuous across measured 170 ms main-thread stalls. */
+import assert from 'node:assert/strict';
+import {GameAudio} from '../runtime/audio.mjs';
+const zip=new Uint8Array(22);new DataView(zip.buffer).setUint32(0,0x06054b50,true);
+const starts=[],callbacks=[],context={currentTime:0,createBuffer(channels,length,rate){assert.equal(channels,1);assert.equal(rate,22050);const samples=new Float32Array(length);return{duration:length/rate,getChannelData:()=>samples};},createBufferSource(){return{connect(){},disconnect(){},start(time){starts.push({time,duration:this.buffer.duration,samples:this.buffer.getChannelData(0).slice()});}};}};
+const memory=new Uint8Array(2240),r={jniEnv:1,javaObjects:new Map(),malloc:()=>4096,jobject(o){this.javaObjects.set(9,o);return 9;},read:()=>memory.slice(),async call(name,args){callbacks.push({name,args});if(name.endsWith('_mix')){const v=new DataView(memory.buffer);for(let i=0;i<1120;i++)v.setInt16(i*2,i===0?-32768:i===1?32767:i-560,true);}}};
+const audio=new GameAudio(zip,context);audio.pending.push({handle:7,stream:{low:123,high:456}});await audio.pump(r);
+assert.equal(callbacks[0].name,'Java_com_svsgames_sys_XSysAudioStreamer_doneHandler');assert.deepEqual(callbacks[0].args,[1,0,7,0,123,456]);assert(starts.length<=4);assert(starts[0].time>=0.02);assert.equal(starts[0].samples[0],-1);assert.equal(starts[0].samples[1],32767/32768);
+for(const elapsed of [0.017,0.021,0.170,0.016,0.174,0.019,0.154,0.033,0.016]){context.currentTime+=elapsed;const last=starts.at(-1);assert(last.time+last.duration>context.currentTime,'Queued PCM must cover the measured completion stall');const before=starts.length;await audio.pump(r);assert(starts.length-before<=4,'Bound native mixing work per pump');assert(audio.nextPCM>=context.currentTime+0.20);}
+for(let i=1;i<starts.length;i++)assert(Math.abs(starts[i].time-starts[i-1].time-starts[i-1].duration)<1e-12,'No gap or overlap in the scheduled original PCM');
+const before=starts.length;await audio.pump(r);assert.equal(starts.length,before,'Do not advance the mixer when enough PCM is already queued');assert.equal(audio.mixedBuffers,starts.length);assert.equal(callbacks.filter(c=>c.name.endsWith('_mix')).length,starts.length);
+console.log({passed:true,contiguous_original_pcm:true,measured_stalls_covered:true,original_22050_hz_samples:true,bounded_native_mixing:true,pending_callback_order:true,buffers:starts.length});

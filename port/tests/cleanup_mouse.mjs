@@ -1,0 +1,8 @@
+/** Dish Washer: continuous real browser mouse movement; guest reads only. */
+export async function cleanupState(page){return page.evaluate(()=>{const r=orderup.runtime,m=r.u32(r.elf.address('_ZN15CleanupMinigame9g_ManagerE'));return{phase:r.u32(m+0x58),remaining:r.f32(m+0x5c),cleaned:r.u32(m+0x60),plate:r.u32(m+0x30),scale:r.f32(m+0xa8),error:orderup.error};});}
+export async function playCleanupRound(page,{timeout=75000}={}){
+ const began=Date.now(),b=await page.locator('canvas').boundingBox(),move=(x,y)=>page.mouse.move(b.x+x*b.width/960,b.y+y*b.height/640),strokes=[],pending=new Set(),delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));let first=await cleanupState(page),held=false,pass=0;
+ const paced=async(x,y)=>{const sent=move(x,y);pending.add(sent);sent.finally(()=>pending.delete(sent));await delay(30);if(pending.size>=8)await Promise.race(pending);};
+ try{while(Date.now()-began<timeout){const s=await cleanupState(page);if(s.error)throw Error(s.error);if(s.phase>=2)break;if(s.phase!==1||!s.plate||s.scale<.98){await delay(50);continue;}if(!held){await move(300,150);await page.mouse.down();held=true;}for(let row=0;row<6;row++){const y=170+60*row,left=row%2===0?300:660,right=960-left;await paced(left,y);for(let n=1;n<=6;n++)await paced(left+(right-left)*n/6,y);}await Promise.all(pending);strokes.push({pass:pass++,before:s});}}finally{await Promise.all(pending);if(held)await page.mouse.up();}
+ return{mouse_only_input:true,native_state_reads_only:true,continuous_drag:true,paced_browser_mouse_events:true,first,strokes,last:await cleanupState(page),elapsed_ms:Date.now()-began};
+}

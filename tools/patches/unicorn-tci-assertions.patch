@@ -1,0 +1,21 @@
+diff --git a/qemu/tcg/tci.c b/qemu/tcg/tci.c
+--- a/qemu/tcg/tci.c
++++ b/qemu/tcg/tci.c
+@@ -21,7 +21,7 @@
+ 
+ /* Enable TCI assertions only when debugging TCG (and without NDEBUG defined).
+  * Without assertions, the interpreter runs much faster. */
+-#if defined(CONFIG_DEBUG_TCG)
++#if defined(CONFIG_DEBUG_TCG) || defined(OU_TCI_ASSERTIONS)
+ # define tci_assert(cond) assert(cond)
+ #else
+ # define tci_assert(cond) ((void)0)
+@@ -495,7 +495,7 @@
+ 
+     for (;;) {
+         TCGOpcode opc = tb_ptr[0];
+-#if defined(CONFIG_DEBUG_TCG) && !defined(NDEBUG)
++#if (defined(CONFIG_DEBUG_TCG) || defined(OU_TCI_ASSERTIONS)) && !defined(NDEBUG)
+         uint8_t op_size = tb_ptr[1];
+         uint8_t *old_code_ptr = tb_ptr;
+ #endif

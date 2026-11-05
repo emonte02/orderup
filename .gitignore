@@ -16,6 +16,11 @@
 !/tools/loading_art.mjs
 !/tools/package_game_data.py
 !/tools/build_emulator.py
+!/tools/make_*vectors.py
+!/tools/test_perf_candidate.py
+!/tools/performance_api.mjs
+!/tools/perf_*.py
+!/tools/ocr_image.swift
 !/tools/patches/
 !/tools/browser/
 /tools/browser/*

@@ -1,0 +1,20 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import {inflateSync} from 'node:zlib';
+import {createHash} from 'node:crypto';
+import {createRequire} from 'node:module';
+import {ArmRuntime} from '../runtime/runtime.mjs';
+const root=new URL('../../',import.meta.url),require=createRequire(import.meta.url),uc=await require(process.env.OU_EMULATOR_BUNDLE||'../build/unicorn-arm.js')({print:()=>{},printErr:()=>{}}),r=new ArmRuntime(uc,fs.readFileSync(new URL('analysis/game-apk/lib/armeabi-v7a/libOrderUp.so',root)),{optimizeMemory:false}),v=JSON.parse(fs.readFileSync(new URL('analysis/dynamic-vertex-native-vectors.json',root))),P=v.base,unpack=s=>inflateSync(Buffer.from(s,'base64')),SP=(r.main.stack-0x100)&~7,entry=r.elf.address(v.name),site=entry+0x100;
+let current,calls=[],checks=0;
+try{
+ assert(uc._ou_hot_native_dynamic_vertices_bind);r.map(P,0x60000);r.renderHot.setEnabled(false);const original=r.read(site,8);
+ for(const offset of [0,0x40,0x80])r.function('dynamic-test-'+offset,()=>{const a=Array.from({length:3},(_,i)=>r.arg(i));if(offset===0x80){r.u32(P+0x41000,r.u32(P+0x41000)+1);r.u32(P+0x30000+(current.seed%8)*4,current.seed*987);r.cpuRegister(uc.ARM_REG_FPSCR,r.cpuRegister(uc.ARM_REG_FPSCR)^0x11);return current.seed%3;}calls.push({kind:offset===0?'lock':'unlock',args:a,sp:r.reg(13),callee:Array.from({length:8},(_,i)=>r.reg(i+4)),memory:createHash('sha256').update(r.read(P,v.size)).digest('hex'),stack:Buffer.from(r.read(SP-0x100,0x100)),quant:Buffer.from(r.read(v.quant,48))});if(offset===0){if(current.seed%13===0)r.u32(P+0x30000+32,current.seed*23);return current.output;}return 0x12300000+current.seed;});
+ for(const offset of [0,0x40,0x80]){r.u32(P+0x5f000+offset,0xe51ff004);r.u32(P+0x5f004+offset,r.trap('dynamic-test-'+offset));}
+ for(const mode of ['original','accelerated','fallback']){
+  r.nativeHot.setEnabled(mode!=='fallback');if(mode==='original')r.write(site,original);else{r.u32(site,0xe51ff004);r.u32(site+4,0x0f009000+384);}
+  for(const c of v.cases){current=c;calls=[];r.write(P,unpack(c.before));r.write(SP-0x100,unpack(c.stack_before));r.write(v.quant,new Uint8Array(48));r.u32(v.slot,P+0x40000);r.active=r.main;r.engine.context_restore(r.main.ctx);r.prepare(r.main,entry,c.args);r.engine.context_restore(r.main.ctx);r.cpuRegister(uc.ARM_REG_CPSR,c.flags);r.cpuRegister(uc.ARM_REG_FPSCR,c.control);for(let i=4;i<=11;i++)r.reg(i,0x12340000+i);for(let i=16;i<32;i++)r.cpuRegister(uc.ARM_REG_S0+i,0x12345600+i);r.engine.context_save(r.main.ctx);
+   const label=mode+' '+c.seed;let result;try{result=await r.runUntilMainIdle({label:'original dynamic vertex finalize'});}catch(error){console.error('CASE',label,'UV',r.u32(P+0x4044),'GLES',r.u8(P+0x40000),'output',current.output);throw error;}assert.equal(result,c.result,label+' result');assert.deepEqual(calls,c.calls.map(x=>({...x,stack:unpack(x.stack),quant:unpack(x.quant)})),label+' original callbacks, memory, stack, arguments and registers');assert.deepEqual(Buffer.from(r.read(P,v.size)),unpack(c.after),label+' full memory');assert.deepEqual(Buffer.from(r.read(SP-0x100,0x100)),unpack(c.stack_after),label+' complete original stack');assert.deepEqual(Buffer.from(r.read(v.quant,48)),unpack(c.quant),label+' quantization parameters');assert.equal(r.cpuRegister(uc.ARM_REG_FPSCR)>>>0,c.fpscr>>>0,label+' FPSCR');assert.equal(r.cpuRegister(uc.ARM_REG_CPSR)>>>0,c.cpsr>>>0,label+' CPSR');for(let i=4;i<=11;i++)assert.equal(r.reg(i),0x12340000+i,label+' r'+i);for(let i=16;i<32;i++)assert.equal(r.cpuRegister(uc.ARM_REG_S0+i)>>>0,c.float_callee[i-16]>>>0,label+' s'+i);checks++;
+  }
+ }
+ const ports=r.nativeHot.report();assert(ports.dynamic_vertex_batches>0);const report={original_cases:v.cases.length,comparisons:checks,all_raw_vertex_bits_and_repeated_uv_channels:true,complete_original_stack:true,original_lock_unlock_callbacks_and_stateful_material_fallback:true,packed_legacy_format_and_input_index_stack_alias_fallbacks:true,registers_flags_and_float_state:true,ports};fs.writeFileSync(new URL('analysis/dynamic-vertices-wasm-tests.json',root),JSON.stringify(report,null,2)+'\n');console.log(report);
+}finally{r.close();}

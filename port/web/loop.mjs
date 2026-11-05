@@ -12,9 +12,10 @@ export function startFrameLoop(state,runtime,{audio=runtime.audio,flushSaves=asy
  const frame=async()=>{
   timer=null;if(paused||stopped||state.state!=='running')return;busy=true;const then=performance.now();
   try{
+   runtime.motion?.beginFrame();
    // A quick press and release must reach separate native updates.
    if(state.input.length)await touch(state.input.shift());
-   await runtime.call('Java_com_svsgames_orderup_OrderUpJNILib_step',[runtime.jniEnv,0],{timeoutMs:600000});if(afterStep)await afterStep();runtime.graphics?.present();
+   await runtime.call('Java_com_svsgames_orderup_OrderUpJNILib_step',[runtime.jniEnv,0],{timeoutMs:600000});runtime.motion?.endFrame();if(afterStep)await afterStep();runtime.graphics?.present();
    if(audio)await audio.pump(runtime);await runtime.pumpHostCallbacks?.();await afterFrame({releaseInput});await flushSaves();
    state.frames++;state.timings.push(performance.now()-then);if(state.timings.length>300)state.timings.shift();state.frameTimes??=[];state.frameTimes.push(performance.now());if(state.frameTimes.length>300)state.frameTimes.shift();
    nextFrame=Math.max(nextFrame+1000/60,performance.now());

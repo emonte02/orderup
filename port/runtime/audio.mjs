@@ -28,7 +28,9 @@ export class GameAudio {
   while(this.pending.length){const p=this.pending.shift(),s=p.stream||{low:0,high:0};await r.call('Java_com_svsgames_sys_XSysAudioStreamer_doneHandler',[r.jniEnv,0,p.handle,0,s.low,s.high]);}
   const byteCount=2240;if(!this.pcm){const address=r.malloc(byteCount);this.pcm=r.jobject({kind:'bytes',length:byteCount,address});}
   this.nextPCM=Math.max(this.nextPCM,this.context.currentTime+0.02);let chunks=0;
-  while(this.nextPCM<this.context.currentTime+0.12&&chunks++<4){
+  // Keep enough original PCM queued for measured scene-completion work.
+  // This changes playback headroom, never the mixer rate or game clock.
+  while(this.nextPCM<this.context.currentTime+0.20&&chunks++<4){
    await r.call('Java_com_svsgames_orderup_OrderUpJNILib_mix',[r.jniEnv,0,this.pcm,byteCount]);const bytes=r.read(r.javaObjects.get(this.pcm).address,byteCount),v=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength),buffer=this.context.createBuffer(1,byteCount/2,22050),out=buffer.getChannelData(0);for(let i=0;i<out.length;i++)out[i]=v.getInt16(i*2,true)/32768;
    const source=this.context.createBufferSource();source.buffer=buffer;source.connect(this.context.destination);source.onended=()=>source.disconnect();source.start(this.nextPCM);this.nextPCM+=buffer.duration;this.mixedBuffers++;
   }

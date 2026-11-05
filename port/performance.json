@@ -1,0 +1,577 @@
+{
+  "tested_date": "2026-11-05",
+  "tested_bundle_sha256": "be65a94b429153c743a6aea1c582e93a17adcc0e715fcf3bb703920ecc9be97e",
+  "machine": "Apple M5 Max Mac",
+  "browser": "Chrome 156, ANGLE Metal",
+  "viewport": [
+    1920,
+    1080
+  ],
+  "game_render_resolution": [
+    960,
+    640
+  ],
+  "audio_enabled": true,
+  "warmup_frames": 60,
+  "method": "Conservative continuous one-second windows before a completion, excluding the next frame; unique completed canvas copies independently observed by requestAnimationFrame. Native JNI loading swaps are separately excluded. All subsequent transition outliers retained.",
+  "semantic_groups": 55,
+  "interpreter_and_host_assertion_groups": 55,
+  "all_eight_mobile_challenges_completed_with_mouse": true,
+  "all_five_kitchens": true,
+  "original_waiter_meal_receipt_verified": true,
+  "scenes": [
+    {
+      "id": "diner",
+      "group": "kitchen",
+      "scene": "Gravy Chug diner, two orders",
+      "frames": 2340,
+      "average_fps": 59.33777119300482,
+      "minimum_native_frames_in_sliding_second": 57,
+      "minimum_displayed_frames_in_sliding_second": 48,
+      "work_ms": {
+        "samples": 2340,
+        "mean_ms": 14.647051282214303,
+        "p50_ms": 14.5,
+        "p95_ms": 15.400000095367432,
+        "p99_ms": 16.5,
+        "max_ms": 36.5,
+        "over_33_334_ms": 2
+      },
+      "completion_intervals_ms": {
+        "samples": 2339,
+        "mean_ms": 16.852672082127135,
+        "p50_ms": 16.799999713897705,
+        "p95_ms": 19.59999990463257,
+        "p99_ms": 20.5,
+        "max_ms": 36.59999990463257,
+        "over_33_334_ms": 5
+      },
+      "pcm_underflows": {
+        "count": 0,
+        "maximum_seconds": 0
+      },
+      "runtime_error": null,
+      "graphics_errors": [],
+      "audio_decode_errors": []
+    },
+    {
+      "id": "italian",
+      "group": "kitchen",
+      "scene": "Stuffolini, hired assistant, two orders",
+      "frames": 2340,
+      "average_fps": 59.1232868400603,
+      "minimum_native_frames_in_sliding_second": 58,
+      "minimum_displayed_frames_in_sliding_second": 49,
+      "work_ms": {
+        "samples": 2340,
+        "mean_ms": 14.27961538143647,
+        "p50_ms": 14.099999904632568,
+        "p95_ms": 14.700000286102295,
+        "p99_ms": 24.09999990463257,
+        "max_ms": 26.09999990463257,
+        "over_33_334_ms": 0
+      },
+      "completion_intervals_ms": {
+        "samples": 2339,
+        "mean_ms": 16.91380932026309,
+        "p50_ms": 16.899999618530273,
+        "p95_ms": 19.600000381469727,
+        "p99_ms": 26.09999990463257,
+        "max_ms": 28,
+        "over_33_334_ms": 0
+      },
+      "pcm_underflows": {
+        "count": 0,
+        "maximum_seconds": 0
+      },
+      "runtime_error": null,
+      "graphics_errors": [],
+      "audio_decode_errors": []
+    },
+    {
+      "id": "asian",
+      "group": "kitchen",
+      "scene": "Kung Fusion, three orders",
+      "frames": 2340,
+      "average_fps": 59.4951938357308,
+      "minimum_native_frames_in_sliding_second": 58,
+      "minimum_displayed_frames_in_sliding_second": 46,
+      "work_ms": {
+        "samples": 2340,
+        "mean_ms": 13.387094015952869,
+        "p50_ms": 13.300000190734863,
+        "p95_ms": 13.800000190734863,
+        "p99_ms": 14.900000095367432,
+        "max_ms": 33.5,
+        "over_33_334_ms": 1
+      },
+      "completion_intervals_ms": {
+        "samples": 2339,
+        "mean_ms": 16.808080376392248,
+        "p50_ms": 16.800000190734863,
+        "p95_ms": 19.100000381469727,
+        "p99_ms": 19.5,
+        "max_ms": 37.39999961853027,
+        "over_33_334_ms": 4
+      },
+      "pcm_underflows": {
+        "count": 0,
+        "maximum_seconds": 0
+      },
+      "runtime_error": null,
+      "graphics_errors": [],
+      "audio_decode_errors": []
+    },
+    {
+      "id": "worldclass",
+      "group": "kitchen",
+      "scene": "Chez Haute, four orders",
+      "frames": 2340,
+      "average_fps": 59.074607263726826,
+      "minimum_native_frames_in_sliding_second": 57,
+      "minimum_displayed_frames_in_sliding_second": 45,
+      "work_ms": {
+        "samples": 2340,
+        "mean_ms": 14.887094012081114,
+        "p50_ms": 14.799999713897705,
+        "p95_ms": 15.900000095367432,
+        "p99_ms": 16.699999809265137,
+        "max_ms": 36.59999990463257,
+        "over_33_334_ms": 3
+      },
+      "completion_intervals_ms": {
+        "samples": 2339,
+        "mean_ms": 16.92774690038478,
+        "p50_ms": 16.700000286102295,
+        "p95_ms": 20.300000190734863,
+        "p99_ms": 20.90000009536743,
+        "max_ms": 38.299999713897705,
+        "over_33_334_ms": 3
+      },
+      "pcm_underflows": {
+        "count": 0,
+        "maximum_seconds": 0
+      },
+      "runtime_error": null,
+      "graphics_errors": [],
+      "audio_decode_errors": []
+    },
+    {
+      "id": "mexican",
+      "group": "kitchen",
+      "scene": "El Fuego, five orders",
+      "frames": 2341,
+      "average_fps": 48.303394861484584,
+      "minimum_native_frames_in_sliding_second": 46,
+      "minimum_displayed_frames_in_sliding_second": 45,
+      "work_ms": {
+        "samples": 2341,
+        "mean_ms": 20.571379755460924,
+        "p50_ms": 20.5,
+        "p95_ms": 21.799999713897705,
+        "p99_ms": 22.5,
+        "max_ms": 54,
+        "over_33_334_ms": 1
+      },
+      "completion_intervals_ms": {
+        "samples": 2340,
+        "mean_ms": 20.702478632560144,
+        "p50_ms": 20.59999990463257,
+        "p95_ms": 22,
+        "p99_ms": 22.700000286102295,
+        "max_ms": 54.09999990463257,
+        "over_33_334_ms": 1
+      },
+      "pcm_underflows": {
+        "count": 0,
+        "maximum_seconds": 0
+      },
+      "runtime_error": null,
+      "graphics_errors": [],
+      "audio_decode_errors": []
+    },
+    {
+      "id": "pratfall",
+      "group": "challenge",
+      "scene": "Newsboy Nosedive",
+      "frames": 5340,
+      "average_fps": 53.56445944430794,
+      "minimum_native_frames_in_sliding_second": 37,
+      "minimum_displayed_frames_in_sliding_second": 34,
+      "work_ms": {
+        "samples": 5340,
+        "mean_ms": 16.638220975640113,
+        "p50_ms": 14.399999618530273,
+        "p95_ms": 22.90000009536743,
+        "p99_ms": 50,
+        "max_ms": 134.09999990463257,
+        "over_33_334_ms": 180
+      },
+      "completion_intervals_ms": {
+        "samples": 5339,
+        "mean_ms": 18.669095336241007,
+        "p50_ms": 17.40000009536743,
+        "p95_ms": 23,
+        "p99_ms": 50.40000009536743,
+        "max_ms": 134.2999997138977,
+        "over_33_334_ms": 180
+      },
+      "pcm_underflows": {
+        "count": 0,
+        "maximum_seconds": 0
+      },
+      "runtime_error": null,
+      "graphics_errors": [],
+      "audio_decode_errors": []
+    },
+    {
+      "id": "cleanup",
+      "group": "challenge",
+      "scene": "Dish Washer",
+      "frames": 4141,
+      "average_fps": 38.739850673852466,
+      "minimum_native_frames_in_sliding_second": 34,
+      "minimum_displayed_frames_in_sliding_second": 34,
+      "work_ms": {
+        "samples": 4141,
+        "mean_ms": 25.582226516485964,
+        "p50_ms": 24.800000190734863,
+        "p95_ms": 31.600000381469727,
+        "p99_ms": 34.19999980926514,
+        "max_ms": 136.60000038146973,
+        "over_33_334_ms": 75
+      },
+      "completion_intervals_ms": {
+        "samples": 4140,
+        "mean_ms": 25.813212560340403,
+        "p50_ms": 25,
+        "p95_ms": 31.90000009536743,
+        "p99_ms": 34.5,
+        "max_ms": 136.7000002861023,
+        "over_33_334_ms": 94
+      },
+      "pcm_underflows": {
+        "count": 0,
+        "maximum_seconds": 0
+      },
+      "runtime_error": null,
+      "graphics_errors": [],
+      "audio_decode_errors": []
+    },
+    {
+      "id": "fire",
+      "group": "challenge",
+      "scene": "Kitchen Fire",
+      "frames": 3541,
+      "average_fps": 53.193247763176664,
+      "minimum_native_frames_in_sliding_second": 36,
+      "minimum_displayed_frames_in_sliding_second": 36,
+      "work_ms": {
+        "samples": 3541,
+        "mean_ms": 18.68350748354619,
+        "p50_ms": 18.200000286102295,
+        "p95_ms": 22.09999990463257,
+        "p99_ms": 24.199999809265137,
+        "max_ms": 166.69999980926514,
+        "over_33_334_ms": 12
+      },
+      "completion_intervals_ms": {
+        "samples": 3540,
+        "mean_ms": 18.799378531127328,
+        "p50_ms": 18.300000190734863,
+        "p95_ms": 22.300000190734863,
+        "p99_ms": 24.40000009536743,
+        "max_ms": 166.80000019073486,
+        "over_33_334_ms": 12
+      },
+      "pcm_underflows": {
+        "count": 0,
+        "maximum_seconds": 0
+      },
+      "runtime_error": null,
+      "graphics_errors": [],
+      "audio_decode_errors": []
+    },
+    {
+      "id": "rats",
+      "group": "challenge",
+      "scene": "Rats",
+      "frames": 4141,
+      "average_fps": 44.765806708939664,
+      "minimum_native_frames_in_sliding_second": 32,
+      "minimum_displayed_frames_in_sliding_second": 32,
+      "work_ms": {
+        "samples": 4141,
+        "mean_ms": 22.21864283669257,
+        "p50_ms": 21.899999618530273,
+        "p95_ms": 24.199999809265137,
+        "p99_ms": 28.09999990463257,
+        "max_ms": 145,
+        "over_33_334_ms": 29
+      },
+      "completion_intervals_ms": {
+        "samples": 4140,
+        "mean_ms": 22.338478260915636,
+        "p50_ms": 22,
+        "p95_ms": 24.700000286102295,
+        "p99_ms": 28.40000009536743,
+        "max_ms": 145.10000038146973,
+        "over_33_334_ms": 29
+      },
+      "pcm_underflows": {
+        "count": 0,
+        "maximum_seconds": 0
+      },
+      "runtime_error": null,
+      "graphics_errors": [],
+      "audio_decode_errors": []
+    },
+    {
+      "id": "asleep",
+      "group": "challenge",
+      "scene": "Asleep on the Job",
+      "frames": 3541,
+      "average_fps": 57.70030072614362,
+      "minimum_native_frames_in_sliding_second": 53,
+      "minimum_displayed_frames_in_sliding_second": 53,
+      "work_ms": {
+        "samples": 3541,
+        "mean_ms": 17.103953681871467,
+        "p50_ms": 17,
+        "p95_ms": 17.699999809265137,
+        "p99_ms": 19.300000190734863,
+        "max_ms": 65.19999980926514,
+        "over_33_334_ms": 12
+      },
+      "completion_intervals_ms": {
+        "samples": 3540,
+        "mean_ms": 17.330932203389832,
+        "p50_ms": 17.09999990463257,
+        "p95_ms": 18.100000381469727,
+        "p99_ms": 22.200000286102295,
+        "max_ms": 65.40000009536743,
+        "over_33_334_ms": 12
+      },
+      "pcm_underflows": {
+        "count": 0,
+        "maximum_seconds": 0
+      },
+      "runtime_error": null,
+      "graphics_errors": [],
+      "audio_decode_errors": []
+    },
+    {
+      "id": "sharpening",
+      "group": "challenge",
+      "scene": "Knife Sharpening",
+      "frames": 3540,
+      "average_fps": 59.27258354120283,
+      "minimum_native_frames_in_sliding_second": 57,
+      "minimum_displayed_frames_in_sliding_second": 47,
+      "work_ms": {
+        "samples": 3540,
+        "mean_ms": 14.189915250519574,
+        "p50_ms": 14.099999904632568,
+        "p95_ms": 14.5,
+        "p99_ms": 14.900000095367432,
+        "max_ms": 44.30000019073486,
+        "over_33_334_ms": 4
+      },
+      "completion_intervals_ms": {
+        "samples": 3539,
+        "mean_ms": 16.871206555470263,
+        "p50_ms": 16.800000190734863,
+        "p95_ms": 19.799999713897705,
+        "p99_ms": 20.300000190734863,
+        "max_ms": 48.700000286102295,
+        "over_33_334_ms": 6
+      },
+      "pcm_underflows": {
+        "count": 0,
+        "maximum_seconds": 0
+      },
+      "runtime_error": null,
+      "graphics_errors": [],
+      "audio_decode_errors": []
+    },
+    {
+      "id": "pepper",
+      "group": "challenge",
+      "scene": "Pepper Chop",
+      "frames": 4141,
+      "average_fps": 47.23363765177509,
+      "minimum_native_frames_in_sliding_second": 42,
+      "minimum_displayed_frames_in_sliding_second": 41,
+      "work_ms": {
+        "samples": 4141,
+        "mean_ms": 21.015962329298883,
+        "p50_ms": 20.59999990463257,
+        "p95_ms": 22.59999990463257,
+        "p99_ms": 27.90000009536743,
+        "max_ms": 82.2000002861023,
+        "over_33_334_ms": 41
+      },
+      "completion_intervals_ms": {
+        "samples": 4140,
+        "mean_ms": 21.171352657027867,
+        "p50_ms": 20.700000286102295,
+        "p95_ms": 22.800000190734863,
+        "p99_ms": 28.5,
+        "max_ms": 82.40000009536743,
+        "over_33_334_ms": 41
+      },
+      "pcm_underflows": {
+        "count": 0,
+        "maximum_seconds": 0
+      },
+      "runtime_error": null,
+      "graphics_errors": [],
+      "audio_decode_errors": []
+    },
+    {
+      "id": "knife",
+      "group": "challenge",
+      "scene": "Knife Skills",
+      "frames": 4140,
+      "average_fps": 59.306320944936566,
+      "minimum_native_frames_in_sliding_second": 55,
+      "minimum_displayed_frames_in_sliding_second": 42,
+      "work_ms": {
+        "samples": 4140,
+        "mean_ms": 11.154082124590298,
+        "p50_ms": 10.900000095367432,
+        "p95_ms": 12.300000190734863,
+        "p99_ms": 13.800000190734863,
+        "max_ms": 55.5,
+        "over_33_334_ms": 15
+      },
+      "completion_intervals_ms": {
+        "samples": 4139,
+        "mean_ms": 16.861609084273802,
+        "p50_ms": 16.59999990463257,
+        "p95_ms": 18.799999713897705,
+        "p99_ms": 29.300000190734863,
+        "max_ms": 61.40000009536743,
+        "over_33_334_ms": 16
+      },
+      "pcm_underflows": {
+        "count": 0,
+        "maximum_seconds": 0
+      },
+      "runtime_error": null,
+      "graphics_errors": [],
+      "audio_decode_errors": []
+    },
+    {
+      "id": "cooking",
+      "group": "cooking",
+      "scene": "Three-part macaroni and cheese, original waiter delivery",
+      "frames": 8941,
+      "average_fps": 56.632243891163476,
+      "minimum_native_frames_in_sliding_second": 42,
+      "minimum_displayed_frames_in_sliding_second": 41,
+      "work_ms": {
+        "samples": 8941,
+        "mean_ms": 16.600503300996504,
+        "p50_ms": 16.59999990463257,
+        "p95_ms": 19.199999809265137,
+        "p99_ms": 21.699999809265137,
+        "max_ms": 272.30000019073486,
+        "over_33_334_ms": 26
+      },
+      "completion_intervals_ms": {
+        "samples": 8940,
+        "mean_ms": 17.65778523488866,
+        "p50_ms": 17.40000009536743,
+        "p95_ms": 20.09999990463257,
+        "p99_ms": 22.5,
+        "max_ms": 273.40000009536743,
+        "over_33_334_ms": 30
+      },
+      "pcm_underflows": {
+        "count": 1,
+        "maximum_seconds": 0.05923809523819301
+      },
+      "runtime_error": null,
+      "graphics_errors": [],
+      "audio_decode_errors": []
+    },
+    {
+      "id": "tournament",
+      "group": "tournament",
+      "scene": "Fortified Chef rules, preparation, opponent demo and player handoff",
+      "frames": 5341,
+      "average_fps": 57.15374357032052,
+      "minimum_native_frames_in_sliding_second": 35,
+      "minimum_displayed_frames_in_sliding_second": 35,
+      "work_ms": {
+        "samples": 5341,
+        "mean_ms": 15.737109157660106,
+        "p50_ms": 15.099999904632568,
+        "p95_ms": 20.59999990463257,
+        "p99_ms": 22.299999713897705,
+        "max_ms": 394.1000003814697,
+        "over_33_334_ms": 11
+      },
+      "completion_intervals_ms": {
+        "samples": 5340,
+        "mean_ms": 17.496666666630947,
+        "p50_ms": 17,
+        "p95_ms": 21.199999809265137,
+        "p99_ms": 25,
+        "max_ms": 398.1000003814697,
+        "over_33_334_ms": 12
+      },
+      "pcm_underflows": {
+        "count": 1,
+        "maximum_seconds": 0.16107936507938803
+      },
+      "runtime_error": null,
+      "graphics_errors": [],
+      "audio_decode_errors": []
+    },
+    {
+      "id": "tournament-repeat",
+      "group": "tournament",
+      "scene": "Fortified Chef full route, fresh repeat",
+      "frames": 5341,
+      "average_fps": 57.19929132880557,
+      "minimum_native_frames_in_sliding_second": 35,
+      "minimum_displayed_frames_in_sliding_second": 34,
+      "work_ms": {
+        "samples": 5341,
+        "mean_ms": 15.655102039584282,
+        "p50_ms": 14.900000095367432,
+        "p95_ms": 21,
+        "p99_ms": 22.90000009536743,
+        "max_ms": 391.8999996185303,
+        "over_33_334_ms": 11
+      },
+      "completion_intervals_ms": {
+        "samples": 5340,
+        "mean_ms": 17.482734082343427,
+        "p50_ms": 16.90000009536743,
+        "p95_ms": 21.5,
+        "p99_ms": 24.90000009536743,
+        "max_ms": 394.09999990463257,
+        "over_33_334_ms": 13
+      },
+      "pcm_underflows": {
+        "count": 1,
+        "maximum_seconds": 0.1880000000000308
+      },
+      "runtime_error": null,
+      "graphics_errors": [],
+      "audio_decode_errors": []
+    }
+  ],
+  "limitations": [
+    "These one-second minima do not mean every frame completed within 33.3 ms.",
+    "Short preparation and first-tool hitches and associated PCM underflows remain; see per-scene maximums.",
+    "Results apply to the tested desktop machine and browser; original-iPad parity is not measured.",
+    "An exhaustive unassisted campaign, every recipe combination, other hardware, other browser engines and battery or thermal states are not certified."
+  ],
+  "release_bundle_sha256": "9135acbf65502dacbf200e467c7eb36af87e9835fe59a81d11833c022dbcb07c",
+  "release_executable_identical_to_tested_bundle": true,
+  "release_bundle_difference": "Embedded WASM name custom section: output module filename fast-exit versus final; all executable sections and surrounding JavaScript are identical."
+}

@@ -1,8 +1,9 @@
 import {bitsFloat} from './memory.mjs';
+const simpleCalls={glEnable:'enable',glDisable:'disable',glCullFace:'cullFace',glFrontFace:'frontFace',glClear:'clear',glClearStencil:'clearStencil',glStencilMask:'stencilMask'},integerCalls={glBlendFunc:['blendFunc',2],glStencilFunc:['stencilFunc',3],glStencilOp:['stencilOp',3],glTexParameteri:['texParameteri',3],glViewport:['viewport',4],glScissor:['scissor',4]};
 /** GLES2 guest ABI -> actual WebGL. Unsupported operations fail visibly. */
 export class GameGraphics {
  constructor(canvas,{width=960,height=640,log=()=>{}}={}){
-  this.supportsCommandBatch=true;this.canvas=canvas;canvas.width=width;canvas.height=height;this.renderCanvas=document.createElement('canvas');this.renderCanvas.width=width;this.renderCanvas.height=height;this.presentation=canvas.getContext('2d',{alpha:false});this.gl=this.renderCanvas.getContext('webgl',{alpha:false,depth:true,stencil:true,antialias:false,preserveDrawingBuffer:true});if(!this.gl)throw Error('WebGL unavailable');
+  this.supportsCommandBatch=true;this.supportsMeshBatch=true;this.canvas=canvas;canvas.width=width;canvas.height=height;this.renderCanvas=document.createElement('canvas');this.renderCanvas.width=width;this.renderCanvas.height=height;this.presentation=canvas.getContext('2d',{alpha:false});this.gl=this.renderCanvas.getContext('webgl',{alpha:false,depth:true,stencil:true,antialias:false,preserveDrawingBuffer:true});if(!this.gl)throw Error('WebGL unavailable');
   const g=this.gl;g.viewport(0,0,width,height);g.depthFunc(g.LEQUAL);this.log=log;this.next=1;this.objects=new Map();this.uniforms=new Map();this.buffers=new Map();this.bindings=new Map();this.attributes=new Map();this.enabledAttributes=new Set();this.clientBuffers=new Map();this.shaders=[];this.draws=0;this.textureUploads=0;this.bufferUploads=0;this.counts=new Map();this.errors=[];
   for(const n of ['WEBGL_compressed_texture_etc1','WEBGL_compressed_texture_etc','WEBGL_compressed_texture_s3tc','OES_element_index_uint','OES_standard_derivatives'])g.getExtension(n);
   this.debug=g.getExtension('WEBGL_debug_renderer_info');this.renderer=this.debug?g.getParameter(this.debug.UNMASKED_RENDERER_WEBGL):g.getParameter(g.RENDERER);this.initializeDefaultTextures();
@@ -21,10 +22,10 @@ export class GameGraphics {
  floatArray(r,p,n){const b=r.read(p,n*4);return new Float32Array(b.buffer,b.byteOffset,n);}
  call(name,r){
   const g=this.gl,a=i=>r.arg(i),fl=i=>bitsFloat(a(i));this.counts.set(name,(this.counts.get(name)||0)+1);
-  const simple={glEnable:'enable',glDisable:'disable',glCullFace:'cullFace',glFrontFace:'frontFace',glClear:'clear',glClearStencil:'clearStencil',glStencilMask:'stencilMask'};
+  const simple=simpleCalls;
   if(name==='glActiveTexture'){this.activeTexture=a(0);g.activeTexture(a(0));return 0;}
   if(simple[name]){g[simple[name]](a(0));return 0;}
-  const ints={glBlendFunc:['blendFunc',2],glStencilFunc:['stencilFunc',3],glStencilOp:['stencilOp',3],glTexParameteri:['texParameteri',3],glViewport:['viewport',4],glScissor:['scissor',4]};
+  const ints=integerCalls;
   if(ints[name]){const [fn,n]=ints[name];g[fn](...Array.from({length:n},(_,i)=>a(i)));return 0;}
   if(name==='glDepthMask'){g.depthMask(!!a(0));return 0;}
   if(name==='glBlendEquationOES'){g.blendEquation(a(0));return 0;}

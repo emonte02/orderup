@@ -7,7 +7,7 @@ const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 export function createGameServer(){
  let artwork;
  const routes=new Map([
-  ['/', ['port/web/index.html','text/html']],['/app.mjs',['port/web/app.mjs','text/javascript']],['/mouse.mjs',['port/web/mouse.mjs','text/javascript']],['/loop.mjs',['port/web/loop.mjs','text/javascript']],
+  ['/', ['port/web/index.html','text/html']],['/apple-touch-icon.png',['port/web/apple-touch-icon.png','image/png']],['/app.mjs',['port/web/app.mjs','text/javascript']],['/mouse.mjs',['port/web/mouse.mjs','text/javascript']],['/loop.mjs',['port/web/loop.mjs','text/javascript']],
   ['/store.mjs',['port/web/store.mjs','text/javascript']],
   ['/fullscreen.mjs',['port/web/fullscreen.mjs','text/javascript']],
   ['/loading.css',['port/web/loading.css','text/css']],

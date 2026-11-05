@@ -48,6 +48,10 @@ async function preload(){
 }
 const fullscreenButton=document.querySelector('#fullscreen'),fullscreenLabel=document.querySelector('#fullscreen-label');
 const fullscreen=state.fullscreen=bindFullscreen(canvas,fullscreenButton,fullscreenLabel,{onUnavailable:()=>{say('Full screen is unavailable in this browser. The game still fills the window.');status.classList.add('toast');clearTimeout(toastTimer);toastTimer=setTimeout(()=>status.classList.remove('toast'),4000);}});
+const motionControls=document.querySelector('#motion-controls'),tiltControl=document.querySelector('#tilt-control'),shakeControl=document.querySelector('#shake-control'),tiltSlider=document.querySelector('#tilt');
+function updateMotionControls(mode){motionControls.hidden=!mode;tiltControl.hidden=mode!=='tilt';shakeControl.hidden=mode!=='shake';document.body.classList.toggle('motion-active',!!mode);}
+tiltSlider.addEventListener('input',()=>state.runtime?.motion.setTilt(Number(tiltSlider.value)));
+document.querySelector('#shake').addEventListener('click',()=>state.runtime?.motion.shake());
 
 const activityIndicator=document.querySelector('#activity-indicator');
 const notice=document.querySelector('#notice'),noticeTitle=document.querySelector('#notice-title'),noticeBody=document.querySelector('#notice-body');let resumeAfterNotice=false;
@@ -81,6 +85,7 @@ async function start(){
   loadingPhase('engine');const graphics=new GameGraphics(canvas,{log:event=>console.log('[graphics]',JSON.stringify(event))});
   const audio=new GameAudio(data[3],audioContext);
   const runtime=state.runtime=new ArmRuntime(emulator,data[0],{files,graphics,audio,onSave:(p,data)=>pendingSaves.push(saves.write(p,data)),log:event=>{if(event.type!=='initializer')console.log('[engine]',JSON.stringify(event));}});
+  runtime.onMotionMode=updateMotionControls;
   runtime.onNotice=detail=>showNotice(detail).catch(failed);
   runtime.onActivityIndicator=show=>{state.activityLoading=show;activityIndicator.hidden=!show;};
   runtime.function('eglGetCurrentDisplay',()=>1);runtime.function('eglGetCurrentSurface',()=>1);runtime.function('eglSwapBuffers',()=>{graphics.present();return 1;});
@@ -94,5 +99,5 @@ async function start(){
   if(document.hidden)state.controller.pause();
  }catch(error){failed(error);}
 }
-function failed(error){fullscreen.setMenuVisible(false);stopLoading();document.body.classList.remove('playing');loadingPanel.dataset.stage='error';fullscreen.setBounds(null);activityIndicator.hidden=true;state.state='failed';state.error=String(error);console.error(error);state.report=state.runtime?.report();say(state.bootCompleted?'The game stopped. Reload to return to your latest save.':'The game could not finish loading. Reload to retry.');loadingTitle.textContent='Unable to load the game';loadingDetail.textContent=status.textContent;loadingProgress.hidden=true;loadingAmount.textContent='';loadingElapsed.textContent='';loadingPanel.hidden=false;button.hidden=false;button.textContent='Reload to retry';button.disabled=false;button.onclick=()=>location.reload();}
+function failed(error){updateMotionControls(null);fullscreen.setMenuVisible(false);stopLoading();document.body.classList.remove('playing');loadingPanel.dataset.stage='error';fullscreen.setBounds(null);activityIndicator.hidden=true;state.state='failed';state.error=String(error);console.error(error);state.report=state.runtime?.report();say(state.bootCompleted?'The game stopped. Reload to return to your latest save.':'The game could not finish loading. Reload to retry.');loadingTitle.textContent='Unable to load the game';loadingDetail.textContent=status.textContent;loadingProgress.hidden=true;loadingAmount.textContent='';loadingElapsed.textContent='';loadingPanel.hidden=false;button.hidden=false;button.textContent='Reload to retry';button.disabled=false;button.onclick=()=>location.reload();}
 loadingTimer=setInterval(updateLoading,250);updateLoading();const assetsReady=preload();start();

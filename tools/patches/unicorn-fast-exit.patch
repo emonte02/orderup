@@ -1,0 +1,167 @@
+diff --git a/qemu/include/tcg/tcg-opc.h b/qemu/include/tcg/tcg-opc.h
+--- a/qemu/include/tcg/tcg-opc.h
++++ b/qemu/include/tcg/tcg-opc.h
+@@ -290,6 +290,12 @@
+ DEF(bitsel_vec, 1, 3, 0, IMPLVEC | IMPL(TCG_TARGET_HAS_bitsel_vec))
+ DEF(cmpsel_vec, 1, 4, 1, IMPLVEC | IMPL(TCG_TARGET_HAS_cmpsel_vec))
+ 
++#ifdef OU_TCI_FAST_EXIT
++/* Preserve all existing emitted opcode numbers; append before the sentinel. */
++DEF(ou_check_exit_request, 0, 0, 1,
++    TCG_OPF_CALL_CLOBBER | TCG_OPF_SIDE_EFFECTS)
++#endif
++
+ DEF(last_generic, 0, 0, 0, TCG_OPF_NOT_PRESENT)
+ 
+ #if TCG_TARGET_MAYBE_vec
+diff --git a/qemu/tcg/tcg.c b/qemu/tcg/tcg.c
+--- a/qemu/tcg/tcg.c
++++ b/qemu/tcg/tcg.c
+@@ -1163,6 +1163,9 @@
+     case INDEX_op_mb:
+     case INDEX_op_insn_start:
+     case INDEX_op_exit_tb:
++#ifdef OU_TCI_FAST_EXIT
++    case INDEX_op_ou_check_exit_request:
++#endif
+     case INDEX_op_goto_tb:
+     case INDEX_op_qemu_ld_i32:
+     case INDEX_op_qemu_st_i32:
+@@ -2376,6 +2379,14 @@
+         const TCGOpDef *def = &s->tcg_op_defs[opc];
+ 
+         switch (opc) {
++#ifdef OU_TCI_FAST_EXIT
++        case INDEX_op_ou_check_exit_request:
++            /* Same global invalidation and cross-call preferences as the
++             * original flags-zero helper, with no argument/output temps. */
++            la_global_kill(s, nb_globals);
++            la_cross_call(s, nb_temps);
++            break;
++#endif
+         case INDEX_op_call:
+             {
+                 int call_flags;
+@@ -3508,7 +3519,15 @@
+         if (def->flags & TCG_OPF_SIDE_EFFECTS) {
+             /* sync globals if the op has side effects and might trigger
+                an exception. */
+-            sync_globals(s, i_allocated_regs);
++#ifdef OU_TCI_FAST_EXIT
++            if (op->opc == INDEX_op_ou_check_exit_request) {
++                /* Retain the ordinary helper's read/write-global contract. */
++                save_globals(s, i_allocated_regs);
++            } else
++#endif
++            {
++                sync_globals(s, i_allocated_regs);
++            }
+         }
+         
+         /* satisfy the output constraints */
+diff --git a/qemu/tcg/optimize.c b/qemu/tcg/optimize.c
+--- a/qemu/tcg/optimize.c
++++ b/qemu/tcg/optimize.c
+@@ -1469,6 +1469,17 @@
+             }
+             break;
+ 
++#ifdef OU_TCI_FAST_EXIT
++        case INDEX_op_ou_check_exit_request:
++            /* Keep copy/constant propagation identical to a flags-zero
++             * helper call, even if the helper's normal path later changes. */
++            for (i = 0; i < nb_globals; i++) {
++                if (test_bit(i, temps_used.l)) {
++                    reset_ts(&s->temps[i]);
++                }
++            }
++            goto do_reset_output;
++#endif
+         case INDEX_op_call:
+             if (!(op->args[nb_oargs + nb_iargs + 1]
+                   & (TCG_CALL_NO_READ_GLOBALS | TCG_CALL_NO_WRITE_GLOBALS))) {
+diff --git a/qemu/include/exec/gen-icount.h b/qemu/include/exec/gen-icount.h
+--- a/qemu/include/exec/gen-icount.h
++++ b/qemu/include/exec/gen-icount.h
+@@ -32,6 +32,15 @@
+ 
+ static inline void gen_tb_start(TCGContext *tcg_ctx, TranslationBlock *tb)
+ {
++#ifdef OU_TCI_FAST_EXIT
++    /* The PC sync remains in translator.c before this original check.
++     * Targets with dynamic delay-slot state retain the generic helper. */
++    if (tcg_ctx->delay_slot_flag == NULL) {
++        tcg_gen_op1(tcg_ctx, INDEX_op_ou_check_exit_request,
++                    (TCGArg)(uintptr_t)tcg_ctx->uc);
++        return;
++    }
++#endif
+     TCGv_ptr puc = tcg_const_ptr(tcg_ctx, tcg_ctx->uc);
+ #ifdef OU_TCI_INTEGRATED_BUDGET
+     TCGv_i32 tmp = tcg_const_i32(tcg_ctx, 0x80000000u);
+diff --git a/qemu/tcg/tci/tcg-target.inc.c b/qemu/tcg/tci/tcg-target.inc.c
+--- a/qemu/tcg/tci/tcg-target.inc.c
++++ b/qemu/tcg/tci/tcg-target.inc.c
+@@ -56,6 +56,9 @@
+ /* TODO: documentation. */
+ static const TCGTargetOpDef tcg_target_op_defs[] = {
+     { INDEX_op_exit_tb, { NULL } },
++#ifdef OU_TCI_FAST_EXIT
++    { INDEX_op_ou_check_exit_request, { NULL } },
++#endif
+     { INDEX_op_goto_tb, { NULL } },
+     { INDEX_op_br, { NULL } },
+ 
+@@ -562,6 +565,15 @@
+     tcg_out_op_t(s, opc);
+ 
+     switch (opc) {
++#ifdef OU_TCI_FAST_EXIT
++    case INDEX_op_ou_check_exit_request:
++#if TCG_TARGET_REG_BITS == 32
++        tcg_out32(s, args[0]);
++#else
++        tcg_out64(s, args[0]);
++#endif
++        break;
++#endif
+     case INDEX_op_exit_tb:
+         tcg_out64(s, args[0]);
+         break;
+diff --git a/qemu/tcg/tci.c b/qemu/tcg/tci.c
+--- a/qemu/tcg/tci.c
++++ b/qemu/tcg/tci.c
+@@ -31,6 +31,9 @@
+ #include "tcg/tcg.h"           /* MAX_OPC_PARAM_IARGS */
+ #include "exec/cpu_ldst.h"
+ #include "tcg/tcg-op.h"
++#ifdef OU_TCI_FAST_EXIT
++#include "exec/helper-proto.h"
++#endif
+ 
+ /* Marker for missing code. */
+ #define TODO() \
+@@ -519,6 +522,23 @@
+         tb_ptr += 2;
+ 
+         switch (opc) {
++#ifdef OU_TCI_FAST_EXIT
++        case INDEX_op_ou_check_exit_request:
++            t0 = tci_read_i(&tb_ptr);
++            /* GETPC is the same tci_tb_ptr set above the switch, including
++             * the original restore path. No return-address builtin is used. */
++#ifdef OU_TCI_INTEGRATED_BUDGET
++            HELPER(check_exit_request)((void *)t0, 0x80000000u);
++#else
++            HELPER(check_exit_request)((void *)t0, 0);
++#endif
++            /* The original void helper adapter returns zero in this pair. */
++            tci_write_reg(regs, TCG_REG_R0, 0);
++#if TCG_TARGET_REG_BITS == 32
++            tci_write_reg(regs, TCG_REG_R1, 0);
++#endif
++            break;
++#endif
+         case INDEX_op_call:
+             t0 = tci_read_ri(regs, &tb_ptr);
+ #if TCG_TARGET_REG_BITS == 32

@@ -11,7 +11,7 @@ export function createGraphicsBatch(r){
  const proxy={arg:i=>view.getUint32(current+20+i*4,true),reg:i=>r.reg(i),unsupported:name=>r.unsupported(name),read(address,size){
   const guest=view.getUint32(current+12,true),length=view.getUint32(current+16,true);if(size&&address>=guest&&address+size<=guest+length)return uc.HEAPU8.slice(current+44+address-guest,current+44+address-guest+size);return r.read(address,size);
  }};
- const batch={enabled:true,flushes:0,bind(name){
+ const batch={nativePointer:pointer,enabled:true,flushes:0,bind(name){
   const id=descriptors.findIndex(d=>d[0]===name);if(id<0)return 0;if(bindings.has(name))return bindings.get(name).address;
   const descriptor=descriptors[id],address=base+id*4,slow=r.trap(name);if(uc._ou_gl_batch_bind(pointer,id,descriptor[1],descriptor[2]||0,descriptor[3]||0))throw Error('Invalid graphics queue descriptor '+name);
   r.u32(address,0xe12fff1e);bindings.set(name,{address,slow});return address;

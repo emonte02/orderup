@@ -110,3 +110,29 @@ export function platformArrayCall(r,index){
   if(index===195)return 0;
   if(index===211){const o=obj(a(1)),start=a(2),count=a(3);if(o?.kind!=='int-array'||start+count>o.length)throw Error('SetIntArrayRegion out of range');r.write(o.address+start*4,r.read(a(4),count*4));return 0;}
 }
+
+/** Virtual tablet motion for the original tilt/shake input consumers. */
+export function installMouseMotion(r){
+ const devices=new Map();let tilt=0,pulseUntil=0,direction=1,seen=null,mode=null;
+ const restore=()=>{for(const[p,saved]of devices){r.write(p+0x150,saved.gravity);r.write(p+0x170,saved.acceleration);r.u8(p+0x5b8,saved.capability);}devices.clear();};
+ const motion=r.motion={get mode(){return mode;},setTilt(value){if(!Number.isFinite(value))throw Error('Invalid tilt');tilt=Math.max(-1,Math.min(1,value));},shake(){direction=-direction;pulseUntil=performance.now()+180;},beginFrame(){seen=null;},endFrame(){if(!seen){restore();pulseUntil=0;}if(seen!==mode){mode=seen;r.onMotionMode?.(mode);}},reset(){restore();tilt=0;pulseUntil=0;seen=null;if(mode!==null){mode=null;r.onMotionMode?.(null);}},close(){restore();}};
+ const consumers=[
+  ['tilt','_ZN23KnifeSharpeningMinigame7Manager20s_handle_touchscreenERN3Mim7HandlerIS0_EE',0x0f00c000],
+  ['shake','_ZN19AsleepOnJobMinigame7Manager20s_handle_touchscreenERN3Mim7HandlerIS0_EE',0x0f00c040],
+ ];
+ for(const[kind,name,trampoline]of consumers){
+  const entry=r.elf.address(name),prefix=r.read(entry,8);if(r.u32(entry)!==0xe5903010)throw Error('Original motion input handler changed');r.write(trampoline,prefix);
+  if(kind==='tilt'&&r.u32(entry+4)!==0xe92d4010)throw Error('Original tilt handler changed');
+  if(kind==='shake'){if(r.u32(entry+4)!==0xeddf7a1f)throw Error('Original shake threshold changed');r.u32(trampoline+4,0xeddf7a05);r.u32(trampoline+32,r.u32(entry+0x88));}
+  r.u32(trampoline+8,0xe51ff004);r.u32(trampoline+12,entry+8);
+  r.replaceFunction(name,()=>{
+   const handler=r.arg(0),device=r.u32(handler+0x10);if(device){
+    if(!devices.has(device))devices.set(device,{gravity:r.read(device+0x150,16),acceleration:r.read(device+0x170,16),capability:r.u8(device+0x5b8)});
+    seen=kind;r.u8(device+0x5b8,1);
+    for(const[offset,value]of [[0x150,0],[0x154,tilt],[0x158,Math.sqrt(Math.max(0,1-tilt*tilt))],[0x15c,0],[0x170,0],[0x174,kind==='shake'&&performance.now()<pulseUntil?direction*2.4:0],[0x178,0],[0x17c,0]])r.f32(device+offset,value);
+   }
+   return r.tailCall(trampoline);
+  });
+ }
+ return motion;
+}

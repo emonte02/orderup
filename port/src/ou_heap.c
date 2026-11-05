@@ -51,3 +51,18 @@ int ou_guest_heap_alloc(uc_engine *engine,uint32_t heap,uint32_t size_ref,uint32
  uint32_t pointer=block+tag_size;uint16_t padding=(uint16_t)pointer&((uint16_t)alignment-1);if(padding)padding=(uint16_t)alignment-padding;uint16_t offset=padding+tag_size;m.error=uc_mem_write(engine,pointer-2,&offset,2);if(m.error)return m.error;
  manager=rd(&m,heap+8);wr(&m,manager+0x14,rd(&m,manager+0x14)+wanted);wr(&m,manager+0x18,rd(&m,manager+0x18)+1);wr(&m,heap+0x44,rd(&m,heap+0x44)+wanted);wr(&m,heap+0x40,rd(&m,heap+0x40)+1);wr(&m,size_ref,wanted);if(!m.error){*output=pointer;*handled=1;}return m.error;
 }
+
+/* The original MemManager follows the selected heap chain and returns the
+ * owning heap only after allocation. Unsupported heaps fall back before any
+ * successful allocation; earlier empty searches have no observable writes. */
+int ou_guest_memmanager_alloc(uc_engine *engine,const uint32_t args[4],uint32_t *output,uint32_t *handled){
+ Memory m={engine,0};uint32_t heap=0,head=rd(&m,args[0]+0x4c);*handled=0;*output=0;
+ if(head&&rd(&m,args[1])){
+  uint32_t back=!!(args[2]&0x10000u);heap=back?rd(&m,args[0]+0x50):head;
+  for(unsigned count=0;heap&&!m.error;count++){
+   if(count>=1048576)return UC_ERR_ARG;uint32_t completed=0;int error=ou_guest_heap_alloc(engine,heap,args[1],args[2],output,&completed);if(error)return error;if(!completed)return 0;if(*output)break;heap=rd(&m,heap+(back?0x10:0xc));
+  }
+ }
+ if(m.error)return m.error;wr(&m,args[3],heap);if(!m.error)*handled=1;return m.error;
+}
+int ou_guest_memory_tag(uc_engine *engine,uint32_t pointer,uint32_t *output){Memory m={engine,0};*output=tag(&m,pointer);return m.error;}

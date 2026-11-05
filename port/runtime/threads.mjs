@@ -2,7 +2,11 @@ export function installThreads(r){
  const f=(n,fn)=>r.function(n,fn),a=i=>r.arg(i);const mutexes=new Map(),attrs=new Map(),conditions=new Map(),semaphores=new Map(),futexes=new Map();
  const mutex=p=>{if(!mutexes.has(p))mutexes.set(p,{owner:0,count:0,type:0,waiting:[]});return mutexes.get(p);};
  const block=(kind,key,list)=>{const t=r.active;r.ret(0);t.state='blocked';t.wait={kind,key};list.push(t);return undefined;};
- const ready=t=>{t.state='ready';delete t.wait;};
+ const ready=t=>{const blocked=t.state==='blocked';t.state='ready';delete t.wait;
+  // An actual grant can hand execution from main to its waiting worker. Sleeping
+  // threads retain their deadlines; ordinary round-robin turns still advance.
+  if(blocked&&r.workerHandoff&&r.active===r.main&&t!==r.main){if(!r.handoff||r.handoff.state!=='ready')r.handoff=t;r.active.forceYield=true;}
+ };
  const release=p=>{const m=mutex(p);if(m.count>1){m.count--;return;}m.owner=0;m.count=0;const t=m.waiting.shift();if(t){m.owner=t.id;m.count=1;ready(t);}};
  const acquireFor=(t,p)=>{const m=mutex(p);if(!m.owner){m.owner=t.id;m.count=1;ready(t);}else{t.wait={kind:'mutex',key:p};m.waiting.push(t);}};
  f('pthread_self',()=>r.active.id);

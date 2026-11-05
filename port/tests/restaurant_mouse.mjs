@@ -22,10 +22,10 @@ export async function circlePot(page,{turns=3}={}){
 }
 export async function waitCookingQuality(page,{timeout=22000}={}){
  const start=Date.now();let text=[];
- while(Date.now()-start<timeout){text=await labels(page);const quality=text.find(label=>/^(Good|Perfect)!$/.test(label));if(quality)return quality;await page.waitForTimeout(800);}
+ while(Date.now()-start<timeout){text=await labels(page);const quality=text.find(label=>/^(Good|Perfect)!+$/.test(label));if(quality)return quality;await page.waitForTimeout(800);}
  throw Error('Cooking did not reach Good/Perfect: '+text.join(' | '));
 }
-export async function cookPot(page){if(!(await labels(page)).includes('Stir!'))throw Error('Pot is not the active cooking tool');await circlePot(page);const quality=await waitCookingQuality(page);await plateIngredient(page,480,270);return quality;}
+export async function cookPot(page){const started=Date.now();while(!(await labels(page)).some(label=>/^Stir!+$/i.test(label))){if(Date.now()-started>10000)throw Error('Pot is not the active cooking tool');await page.waitForTimeout(300);}await circlePot(page);const quality=await waitCookingQuality(page);await plateIngredient(page,480,270);return quality;}
 export async function sautePan(page){if(!(await labels(page)).includes('Flip!'))throw Error('Pan is not the active cooking tool');await drag(page,565,425,535,190,300);const quality=await waitCookingQuality(page);await plateIngredient(page,480,245);return quality;}
 export async function grateCheese(page){
  if(!(await labels(page)).some(label=>/^[GC]rate!$/i.test(label)))throw Error('Grater is not the active cooking tool');

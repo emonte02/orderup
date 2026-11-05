@@ -28,3 +28,20 @@ uint32_t ou_font_char_index(const uint16_t *characters,uint16_t last,uint32_t ch
  }
  return 0;
 }
+
+/* Original unscaled/scaled mono and stereo-add frame decoders. The caller
+ * rejects overlapping buffers before bulk capture so original alias behavior
+ * remains in ARM. Odd sample counts leave the final output sample untouched. */
+int ou_decode_mono_adpcm_frame(const uint8_t *input,int16_t *output,int32_t left,int32_t right,int samples,unsigned mode){
+ if(samples<0||input[2]>88||mode>2)return -1;
+ int index=input[2];int16_t previous=(int16_t)((uint16_t)input[0]*257u);
+ for(int i=0;i<(samples/2)*2;i++){
+  const uint8_t byte=input[3+i/2];const int16_t sample=decode(&index,&previous,(i&1)?byte>>4:byte);
+  if(!mode)output[i]=sample;
+  else{const int32_t product=(int32_t)((uint32_t)left*(uint32_t)(int32_t)sample);const int16_t scaled=(int16_t)(product/100);
+   if(mode==1)output[i]=scaled;
+   else{const int32_t other=(int32_t)((uint32_t)right*(uint32_t)(int32_t)sample);output[i*2]=(int16_t)((uint16_t)output[i*2]+(uint16_t)scaled);output[i*2+1]=(int16_t)((uint16_t)output[i*2+1]+(uint16_t)(other/100));}
+  }
+ }
+ return 0;
+}
